@@ -1,0 +1,7 @@
+elpa/
+.lsp-session-v1
+eshell/
+places
+projectile-bookmarks.eld
+auto-save-list/
+server/
