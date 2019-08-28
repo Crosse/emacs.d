@@ -8,7 +8,7 @@
 (show-paren-mode t)             ;; Highlight matching braces.
 (size-indication-mode t)        ;; Show the size of the buffer in the modeline.
 (tool-bar-mode -1)              ;; Disable the tool bar in the GUI.
-(hl-line-mode t)                ;; Highlight the entire line ("cursorline" in Vim).
+(global-hl-line-mode t)         ;; Highlight the entire line ("cursorline" in Vim).
 (xterm-mouse-mode)              ;; Enable mouse mode in terminals that support it.
 (setq
   vc-follow-symlinks t          ;; Always follow symlinks.
@@ -16,6 +16,10 @@
   make-backup-files nil         ;; stop creating backup~ files
   auto-save-default nil         ;; stop creating #autosave# files
   load-prefer-newer t)          ;; Prefer newest version of a file.
+(fset 'yes-or-no-p 'y-or-n-p)   ;; Use 'y' instead of 'yes', etc.
+
+(require 'hl-line)
+(set-face-background hl-line-face "#262626")
 
 ;; Enable line numbers for Emacs >= 26.1
 (when (version<= "26.0.50" emacs-version)
@@ -55,7 +59,9 @@
   :init (setq evil-want-C-u-scroll t) ;; Take C-u back for scrolling a half-page up.
   :config
   (evil-mode 1)
-  (global-set-key (kbd "M-u") 'universal-argument))
+  (global-set-key (kbd "M-u") 'universal-argument)
+  (evil-set-initial-state 'xref--xref-buffer-mode 'emacs))
+
 (use-package evil-numbers
   :requires evil)
 
@@ -114,12 +120,35 @@
 (use-package lsp-mode
   :defer t
   :config (require 'lsp-clients)
-  :custom (lsp-enable-snippet nil)
+  :custom
+  (lsp-enable-snippet nil)
+  (lsp-auto-guess-root t)
   :hook ((c-mode c++-mode rust-mode go-mode python-mode) . lsp))
-(use-package lsp-ui :defer t)
+
+(use-package lsp-ui
+  :defer t
+  :custom
+  (lsp-ui-sideline-delay 1.5)
+  (lsp-ui-sideline-ignore-duplicate t)
+  (lsp-ui-sideline-show-code-actions nil)
+  (lsp-ui-sideline-show-hover nil)
+  (lsp-ui-sideline-show-symbol nil))
+
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+
 (use-package company-lsp :defer t)
 
 (use-package groovy-mode :defer t)
+
+(use-package go-mode
+  :mode ("\\.go\\'")
+  :config (setq gofmt-command "goimports")
+  :hook (before-save . gofmt-before-save))
+
+(use-package hl-todo
+  :config (global-hl-todo-mode))
 
 ;;; THEMES AND UI
 
@@ -143,22 +172,25 @@
   :hook (after-init . doom-modeline-mode))
 
 (defun enable-doom-icons ()
+  "Enable icons in the modeline only for graphical frames."
   (setq doom-modeline-icon (display-graphic-p)))
 
 (defun setup-frame-doom (frame)
+  "Enable icons in the modeline only if FRAME is a graphical frame."
   (with-selected-frame frame
     (enable-doom-icons)))
 
 (add-hook 'after-make-frame-functions #'setup-frame-doom)
 
 (defconst sbcl-bin "/usr/local/bin/sbcl")
+(defconst ccl-bin "~/bin/ccl")
 (use-package slime-company)
 (use-package slime
   :requires (slime-company)
   :init
   (setq slime-contribs '(slime-fancy slime-company))
-  (when (file-exists-p sbcl-bin)
-    (setq inferior-lisp-program sbcl-bin)))
+  (when (file-exists-p ccl-bin)
+    (setq inferior-lisp-program ccl-bin)))
 
 ;; A port of the Vim airline themes to Emacs.
 ;;(use-package airline-themes
