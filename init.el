@@ -10,8 +10,11 @@
 (tool-bar-mode -1)              ;; Disable the tool bar in the GUI.
 (global-hl-line-mode t)         ;; Highlight the entire line ("cursorline" in Vim).
 (xterm-mouse-mode)              ;; Enable mouse mode in terminals that support it.
+(which-function-mode 1)         ;; Display the current function name in the mode line.
 (setq
   vc-follow-symlinks t          ;; Always follow symlinks.
+  scroll-margin 3               ;; Make sure there are at least 3 lines above or below the current line on-screen.
+  scroll-conservatively 5       ;; Don't recenter point unless moving more than five lines outside of the frame.
   inhibit-startup-screen t      ;; Don't show the welcome screen.
   make-backup-files nil         ;; stop creating backup~ files
   auto-save-default nil         ;; stop creating #autosave# files
@@ -30,6 +33,11 @@
   (server-start))
 
 ;;; PACKAGES
+
+;; For packages that aren't in [M]ELPA, copy or git clone them into ~/.emacs.d/lisp.
+(let ((default-directory "~/.emacs.d/lisp"))
+  (normal-top-level-add-to-load-path '("."))
+  (normal-top-level-add-subdirs-to-load-path))
 
 ;; Add MELPA to the package archives
 (require 'package)
@@ -149,6 +157,9 @@
 
 (use-package hl-todo
   :config (global-hl-todo-mode))
+
+(use-package cmake-font-lock
+  :hook (cmake-mode .))
 
 ;;; THEMES AND UI
 
