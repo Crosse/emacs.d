@@ -67,6 +67,12 @@
 (require 'use-package-ensure)
 (setq use-package-always-ensure t)
 
+;; Help OSX figure out what my PATH is.
+(use-package exec-path-from-shell
+  :config
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize)))
+
 ;; Evil-mode, for vi-like emulation and keybindings.
 (use-package evil
   :init (setq evil-want-C-u-scroll t) ;; Take C-u back for scrolling a half-page up.
