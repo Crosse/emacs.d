@@ -73,6 +73,16 @@
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize)))
 
+(use-package projectile
+  :config
+  (projectile-mode 1)
+  (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  (setq projectile-project-root-files-bottom-up
+    '(".projectile" "platformio.ini" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs")))
+
+(projectile-register-project-type 'platformio '("platformio.ini"))
+
 ;; Evil-mode, for vi-like emulation and keybindings.
 (use-package evil
   :init (setq evil-want-C-u-scroll t) ;; Take C-u back for scrolling a half-page up.
@@ -104,7 +114,6 @@
 ;; Minions is a minor mode helper.
 (use-package minions
   :config (minions-mode 1))
-
 
 ;; Helm is an "incremental completion and selection-narrowing framework"
 (use-package helm
@@ -183,7 +192,7 @@
 
 (use-package platformio-mode
   :requires (projectile)
-  :hook (c++-mode . platformio-conditionally-enable))
+  :hook ((c-mode c++-mode) . platformio-conditionally-enable))
 
 (add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
 
@@ -194,12 +203,6 @@
   :config (load-theme 'monokai))
 
 (use-package all-the-icons)
-
-(use-package projectile
-  :config
-  (projectile-mode 1)
-  (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
 
 ;; doom-modeline is a modeline taken from the Doom Emacs project.
 (use-package doom-modeline
