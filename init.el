@@ -181,6 +181,13 @@
 (use-package cmake-font-lock
   :hook (cmake-mode .))
 
+(use-package platformio-mode
+  :requires (projectile)
+  :hook (c++-mode . platformio-conditionally-enable))
+
+(add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
+
+
 ;;; THEMES AND UI
 
 (use-package monokai-theme
