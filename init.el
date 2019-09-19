@@ -11,6 +11,7 @@
 (global-hl-line-mode t)         ;; Highlight the entire line ("cursorline" in Vim).
 (xterm-mouse-mode)              ;; Enable mouse mode in terminals that support it.
 (which-function-mode 1)         ;; Display the current function name in the mode line.
+(auto-fill-mode t)              ;; Automatically break long lines at the fill-column.
 (setq
   vc-follow-symlinks t          ;; Always follow symlinks.
   scroll-margin 3               ;; Make sure there are at least 3 lines above or below the current line on-screen.
@@ -20,6 +21,10 @@
   auto-save-default nil         ;; stop creating #autosave# files
   load-prefer-newer t)          ;; Prefer newest version of a file.
 (fset 'yes-or-no-p 'y-or-n-p)   ;; Use 'y' instead of 'yes', etc.
+(setq c-default-style
+  '((java-mode . "java")
+     (awk-mode . "awk")
+     (other . "bsd")))
 
 (require 'hl-line)
 (set-face-background hl-line-face "#262626")
