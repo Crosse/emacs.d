@@ -109,8 +109,6 @@
 
 (use-package groovy-mode :defer t)
 
-(use-package robot-mode :ensure nil)    ;; disable package installation
-
 (use-package go-mode
   :mode ("\\.go\\'")
   :config (setq gofmt-command "goimports")

@@ -49,6 +49,7 @@
 
 (require 'init-packages)
 (require 'init-ui)
+(require 'init-local nil 'noerror)
 
 (provide 'init)
 ;;; init.el ends here
