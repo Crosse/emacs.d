@@ -49,6 +49,7 @@
 
 (require 'init-packages)
 (require 'init-ui)
+(require 'init-sly)
 (require 'init-local nil 'noerror)
 
 (provide 'init)

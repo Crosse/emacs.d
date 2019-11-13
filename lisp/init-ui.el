@@ -34,16 +34,6 @@
 
 (add-hook 'after-make-frame-functions #'setup-frame-doom)
 
-(defconst sbcl-bin "/usr/local/bin/sbcl")
-(defconst ccl-bin "~/bin/ccl")
-(use-package slime-company)
-(use-package slime
-  :requires (slime-company)
-  :init
-  (setq slime-contribs '(slime-fancy slime-company))
-  (when (file-exists-p ccl-bin)
-    (setq inferior-lisp-program ccl-bin)))
-
 ;; A port of the Vim airline themes to Emacs.
 ;;(use-package airline-themes
 ;;  :config (load-theme 'airline-cool))

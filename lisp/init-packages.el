@@ -19,6 +19,7 @@
   :config
   (evil-mode 1)
   (global-set-key (kbd "M-u") 'universal-argument)
+  (evil-set-initial-state 'sly-mrepl-mode 'emacs)
   (evil-set-initial-state 'xref--xref-buffer-mode 'emacs))
 
 (defun my/cursor-state-change ()

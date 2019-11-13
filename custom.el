@@ -15,7 +15,8 @@
  '(lsp-ui-sideline-show-hover nil)
  '(lsp-ui-sideline-show-symbol nil)
  '(package-selected-packages
-   '(auto-compile flycheck-clangcheck cmake-mode cmake-font-lock hl-todo flycheck go-mode slime-company slime projectile groovy-mode all-the-icons lsp-ui company-lsp lsp-mode cargo rust-mode comment-dwim-2 diff-hl doom-modeline monokai-theme use-package slime-repl-ansi-color powerline-evil minions helm helm-company evil evil-numbers editorconfig airline-themes))
+   (quote
+    (company exec-path-from-shell markdown-mode platformio-mode sly sly-quicklisp auto-compile flycheck-clangcheck cmake-mode cmake-font-lock hl-todo flycheck go-mode projectile groovy-mode all-the-icons lsp-ui company-lsp lsp-mode cargo rust-mode comment-dwim-2 diff-hl doom-modeline monokai-theme use-package slime-repl-ansi-color powerline-evil minions helm helm-company evil evil-numbers editorconfig airline-themes)))
  '(rust-format-on-save t t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
