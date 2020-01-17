@@ -19,7 +19,9 @@
   :config
   (evil-mode 1)
   (global-set-key (kbd "M-u") 'universal-argument)
+  (evil-set-initial-state 'cider-repl-mode 'emacs)
   (evil-set-initial-state 'sly-mrepl-mode 'emacs)
+  (evil-set-initial-state 'sly-db-mode 'emacs)
   (evil-set-initial-state 'xref--xref-buffer-mode 'emacs))
 
 (defun my/cursor-state-change ()
@@ -126,6 +128,32 @@
   :hook ((c-mode c++-mode) . platformio-conditionally-enable))
 
 (add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
+
+(use-package auctex-latexmk
+  :requires (auctex))
+
+(use-package latex
+  :ensure auctex
+  :config (auctex-latexmk-setup)
+  :custom
+  (TeX-auto-save t)
+  (TeX-parse-self t)
+  (TeX-save-query nil)
+  ;(TeX-master nil)
+  :hook (latex-mode . company-auctex-init))
+
+(use-package paredit
+  :hook ((clojure-mode lisp-mode emacs-lisp-mode) . paredit-mode))
+
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package cider
+  :config (setq cider-repl-display-help-banner nil)
+  :requires (clojure-mode))
+
+(use-package clojure-mode
+  :requires (rainbox-delimiters))
 
 (provide 'init-packages)
 ;;; init-packages.el ends here

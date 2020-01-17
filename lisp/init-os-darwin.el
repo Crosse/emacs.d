@@ -7,6 +7,7 @@
 (use-package exec-path-from-shell
   :config
   (when (memq window-system '(mac ns x))
+    (setq exec-path-from-shell-check-startup-files nil)
     (exec-path-from-shell-initialize)))
 
 (provide 'init-os-darwin)

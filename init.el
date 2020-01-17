@@ -52,5 +52,20 @@
 (require 'init-sly)
 (require 'init-local nil 'noerror)
 
+(cond
+  ((executable-find "hunspell")
+    (setq ispell-program-name "hunspell")
+    (setq ispell-local-dictionary "en_US")
+    (setq ispell-local-dictionary-alist
+      '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8))))
+  ((executable-find "aspell")
+    (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US"))))
+
+(add-hook 'text-mode 'flyspell-mode)
+(add-hook 'latex-mode 'flyspell-mode)
+
+; I WANT AUTO-WRAPPING, geez
+(auto-fill-mode)
+
 (provide 'init)
 ;;; init.el ends here
