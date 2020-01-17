@@ -18,8 +18,7 @@
  '(lsp-ui-sideline-show-hover nil)
  '(lsp-ui-sideline-show-symbol nil)
  '(package-selected-packages
-   (quote
-    (yaml-mode cider clojure-mode pdf-tools smartparens auctex auctex-latexmk company-auctex sly-asdf rainbow-blocks rainbow-delimiters company exec-path-from-shell markdown-mode platformio-mode sly sly-quicklisp auto-compile flycheck-clangcheck cmake-mode cmake-font-lock hl-todo flycheck go-mode projectile groovy-mode all-the-icons lsp-ui company-lsp lsp-mode cargo rust-mode comment-dwim-2 diff-hl doom-modeline monokai-theme use-package slime-repl-ansi-color powerline-evil minions helm helm-company evil evil-numbers editorconfig airline-themes)))
+ '(airline-themes all-the-icons auctex auctex-latexmk auto-compile cargo cider clojure-mode cmake-font-lock cmake-mode comment-dwim-2 company company-auctex company-lsp diff-hl doom-modeline editorconfig evil evil-numbers exec-path-from-shell flycheck flycheck-clangcheck go-mode groovy-mode helm helm-company hl-todo lsp-mode lsp-ui markdown-mode minions monokai-theme paredit pdf-tools platformio-mode powerline-evil projectile rainbow-blocks rainbow-delimiters rust-mode slime-repl-ansi-color sly sly-asdf sly-quicklisp smartparens use-package yaml-mode))
  '(rust-format-on-save t t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
