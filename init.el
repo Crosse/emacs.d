@@ -40,9 +40,6 @@
 
 (require 'init-package-setup)
 
-(when (string-equal system-type "darwin")
-  (require 'init-os-darwin))
-
 (cond
   ((string-equal system-type "darwin") (require 'init-os-darwin nil 'noerror))
   ((string-equal system-type "gnu/linux") (require 'init-os-linux nil 'noerror)))
