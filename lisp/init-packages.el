@@ -117,6 +117,8 @@
   :config (setq gofmt-command "goimports")
   :hook (before-save . gofmt-before-save))
 
+(use-package vimrc-mode :defer t)
+
 (use-package hl-todo
   :config (global-hl-todo-mode))
 
