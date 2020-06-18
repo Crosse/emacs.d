@@ -8,10 +8,9 @@
   (projectile-mode 1)
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  (projectile-register-project-type 'platformio '("platformio.ini"))
   (setq projectile-project-root-files-bottom-up
     '(".projectile" "platformio.ini" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs")))
-
-(projectile-register-project-type 'platformio '("platformio.ini"))
 
 ;; Evil-mode, for vi-like emulation and keybindings.
 (use-package evil
@@ -50,26 +49,26 @@
 
 ;; Helm is an "incremental completion and selection-narrowing framework"
 (use-package helm
-    :config
-    (helm-mode 1)
-    (setq helm-mode-fuzzy-match t)
-    (setq helm-completion-in-region-fuzzy-match t))
+  :config
+  (helm-mode 1)
+  ;; Rebind M-x to use Helm mode.
+  (global-set-key (kbd "M-x") 'helm-M-x)
+  ;; Remap various functions to the Helm equivalent
+  (define-key global-map [remap find-file] 'helm-find-files)
+  (define-key global-map [remap occur] 'helm-occur)
+  (define-key global-map [remap list-buffers] 'helm-buffers-list)
+  (define-key global-map [remap dabbrev-expand] 'helm-dabbrev)
+  (define-key global-map [remap execute-extended-command] 'helm-M-x)
+  (unless (boundp 'completion-in-region-function)
+    (define-key lisp-interaction-mode-map [remap completion-at-point] 'helm-lisp-completion-at-point)
+    (define-key emacs-lisp-mode-map       [remap completion-at-point] 'helm-lisp-completion-at-point))
 
-;; Rebind M-x to use Helm mode.
-(global-set-key (kbd "M-x") 'helm-M-x)
-;; Remap various functions to the Helm equivalent
-(define-key global-map [remap find-file] 'helm-find-files)
-(define-key global-map [remap occur] 'helm-occur)
-(define-key global-map [remap list-buffers] 'helm-buffers-list)
-(define-key global-map [remap dabbrev-expand] 'helm-dabbrev)
-(define-key global-map [remap execute-extended-command] 'helm-M-x)
-(unless (boundp 'completion-in-region-function)
-  (define-key lisp-interaction-mode-map [remap completion-at-point] 'helm-lisp-completion-at-point)
-  (define-key emacs-lisp-mode-map       [remap completion-at-point] 'helm-lisp-completion-at-point))
-
-;; Use 'rg' instead of 'ag' in Helm
-(setq helm-grep-ag-command "rg --color=always --colors 'match:fg:black' --colors 'match:bg:yellow' --smart-case --no-heading --line-number %s %s %s")
-(setq helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'"))
+  :custom
+  ;; Use 'rg' instead of 'ag' in Helm
+  helm-grep-ag-command "rg --color=always --colors 'match:fg:black' --colors 'match:bg:yellow' --smart-case --no-heading --line-number %s %s %s"
+  helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'")
+  helm-mode-fuzzy-match t
+  helm-completion-in-region-fuzzy-match t)
 
 (use-package diff-hl
   :config (global-diff-hl-mode))
@@ -89,14 +88,17 @@
 
 (use-package lsp-mode
   :defer t
-  :config (require 'lsp-clients)
   :custom
-  (lsp-enable-snippet nil)
+  (gc-cons-threshold 1600000)
+  (read-process-output-max (* 1024 1024))
   (lsp-auto-guess-root t)
+  (lsp-enable-snippet nil)
+  (lsp-keep-workspace-alive nil)
+  (lsp-prefer-capf t)
+  (lsp-pyls-configuration-sources ["flake8" "pycodestyle"])
   :hook ((c-mode c++-mode rust-mode go-mode python-mode) . lsp))
 
 (use-package lsp-ui
-  :defer t
   :custom
   (lsp-ui-sideline-delay 1.5)
   (lsp-ui-sideline-ignore-duplicate t)
@@ -104,11 +106,29 @@
   (lsp-ui-sideline-show-hover nil)
   (lsp-ui-sideline-show-symbol nil))
 
+(use-package treemacs
+  :defer t
+  :custom
+  (treemacs-project-follow-cleanup t)
+  :bind
+  (:map global-map
+    ("<f9>" . treemacs-select-window)))
+
+(use-package treemacs-evil
+  :config
+  (define-key evil-treemacs-state-map (kbd "TAB") #'treemacs-TAB-action))
+
+(use-package lsp-treemacs
+  :after (treemacs lsp-mode)
+  :config
+  (lsp-treemacs-sync-mode 1)
+  :bind
+  (:map global-map
+    ("<f11>" . lsp-treemacs-errors-list)))
+
 (use-package flycheck
   :ensure t
   :init (global-flycheck-mode))
-
-(use-package company-lsp :defer t)
 
 (use-package groovy-mode :defer t)
 
