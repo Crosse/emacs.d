@@ -6,3 +6,4 @@ projectile-bookmarks.eld
 auto-save-list/
 server/
 lisp/init-local.el
+.cache/
