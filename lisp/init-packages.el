@@ -156,13 +156,25 @@
 
 (use-package latex
   :ensure auctex
+  :init
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (setq-default TeX-master nil)
+  (setq reftex-plug-into-AUCTeX t)
+  (setq TeX-PDF-mode t)
   :config (auctex-latexmk-setup)
-  :custom
-  (TeX-auto-save t)
-  (TeX-parse-self t)
-  (TeX-save-query nil)
-  ;(TeX-master nil)
-  :hook (latex-mode . company-auctex-init))
+  :hook
+  (LaTeX-mode . company-auctex-init)
+  (LaTeX-mode . LaTeX-math-mode)
+  (LaTeX-mode . turn-on-reftex)
+  (TeX-mode . (lambda () (setq TeX-command-default "latexmk"))))
+
+(add-hook 'LaTeX-mode-hook
+  (lambda ()
+    (push
+      '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
+         :help "Run latexmk on file")
+      TeX-command-list)))
 
 (use-package paredit
   :hook ((clojure-mode lisp-mode emacs-lisp-mode) . paredit-mode))
