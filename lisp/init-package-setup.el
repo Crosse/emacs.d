@@ -18,6 +18,7 @@
 
 ;; Work around a problem with ELPA and TLS 1.3 on Emacs < 27
 ;; See https://www.reddit.com/r/emacs/comments/cdf48c/failed_to_download_gnu_archive/
+(require 'gnutls)
 (when (version<= emacs-version "26.99.0")
   (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
 

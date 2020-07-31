@@ -24,6 +24,8 @@
   auto-save-default nil         ;; stop creating #autosave# files
   load-prefer-newer t)          ;; Prefer newest version of a file.
 (fset 'yes-or-no-p 'y-or-n-p)   ;; Use 'y' instead of 'yes', etc.
+
+(require 'cc-vars)
 (setq c-default-style
   '((java-mode . "java")
      (awk-mode . "awk")
@@ -49,6 +51,7 @@
 (require 'init-sly)
 (require 'init-local nil 'noerror)
 
+(require 'ispell)
 (cond
   ((executable-find "hunspell")
     (setq ispell-program-name "hunspell")
