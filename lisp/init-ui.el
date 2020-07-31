@@ -46,5 +46,13 @@
 ;;  :after (powerline-evil)
 ;;  :config (powerline-default-theme))
 
+; Smooth scrolling...sorta.
+(when (version<= "26.0.50" emacs-version)
+  (require 'pixel-scroll)
+  (setq pixel-resolution-fine-flag t)
+  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+  (setq mouse-wheel-progressive-speed nil)
+  (pixel-scroll-mode t))
+
 (provide 'init-ui)
 ;;; init-ui.el ends here
