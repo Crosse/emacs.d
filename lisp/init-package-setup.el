@@ -14,7 +14,7 @@
 
 ;; Add MELPA to the package archives
 (require 'package)
-(add-to-list 'package-archives (cons "melpa" "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 ;; Work around a problem with ELPA and TLS 1.3 on Emacs < 27
 ;; See https://www.reddit.com/r/emacs/comments/cdf48c/failed_to_download_gnu_archive/
