@@ -32,14 +32,15 @@
 
 (when (version<= "26.0.50" emacs-version)
   ;; Enable line numbers
-  (global-display-line-numbers-mode)
+  (global-display-line-numbers-mode))
 
-  ;; Smooth scrolling...sorta.
-  (require 'pixel-scroll)
-  (setq pixel-resolution-fine-flag t)
-  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
-  (setq mouse-wheel-progressive-speed nil)
-  (pixel-scroll-mode t))
+
+;; Smooth scrolling...sorta.
+(require 'pixel-scroll)
+(setq pixel-resolution-fine-flag t)
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+(setq mouse-wheel-progressive-speed nil)
+(pixel-scroll-mode t)
 
 
 (add-hook 'sh-mode-hook
@@ -97,6 +98,8 @@
   (package-initialize)
   (require 'use-package))
 
+(require 'bind-key)
+
 ;; If a package "used" below doesn't exist, install it.
 (require 'use-package-ensure)
 (setq use-package-always-ensure t)
@@ -119,8 +122,10 @@
 ;; https://github.com/purcell/exec-path-from-shell
 (use-package exec-path-from-shell
   :if (memq system-type '(usg-unix-v darwin gnu/linux))
-  ;; :init
+  :init
+  (setq exec-path-from-shell-check-startup-files nil)
   ;; (setq exec-path-from-shell-arguments nil)
+
   :config
   (exec-path-from-shell-initialize))
 
@@ -449,17 +454,26 @@
   :requires (auctex))
 
 
+;; Only required here so that "reftex-plug-into-AUCTex" isn't seen as a free variable down below
+(require 'reftex)
+
 ;; LaTeX support
 ;; https://www.gnu.org/software/emacs/manual/html_node/emacs/TeX-Mode.html
 (use-package latex
-  :ensure auctex
+  :ensure nil
+  :defer 1
+  :requires (auctex auctex-latexmk reftex)
+
   :init
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
   (setq-default TeX-master nil)
   (setq reftex-plug-into-AUCTeX t)
   (setq TeX-PDF-mode t)
-  :config (auctex-latexmk-setup)
+
+  :config
+  (auctex-latexmk-setup)
+
   :hook
   (LaTeX-mode . company-auctex-init)
   (LaTeX-mode . LaTeX-math-mode)
@@ -594,9 +608,7 @@
   "If this regexp matches the text after the cursor, do an \"electric\" return.")
 
 (defun electrify-return-if-match (arg)
-  "If the text after the cursor matches `electrify-return-match' then
-  open and indent an empty line between the cursor and the text.  Move the
-  cursor to the new line."
+  "TODO ARG."
   (interactive "P")
   (let ((case-fold-search nil))
     (if (looking-at electrify-return-match)
@@ -616,6 +628,19 @@
 ;; trackpad / mouse wheel scrolls buffer
 (global-set-key [mouse-4] 'scroll-down-line)
 (global-set-key [mouse-5] 'scroll-up-line)
+
+
+(defun my/compile-after-save ()
+  "Byte-Compiles the Emacs Lisp file in the current buffer, iff a compiled version already exists."
+  (add-hook 'after-save-hook
+    (lambda ()
+      (if (file-exists-p (concat buffer-file-name "c"))
+        (emacs-lisp-byte-compile)))
+
+  nil
+  t))
+
+(add-hook 'emacs-lisp-mode-hook 'my/compile-after-save)
 
 
 (provide 'init)
