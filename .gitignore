@@ -7,3 +7,8 @@ auto-save-list/
 server/
 lisp/init-local.el
 .cache/
+.dap-breakpoints
+*.elc
+projectile.cache
+projects
+tramp
