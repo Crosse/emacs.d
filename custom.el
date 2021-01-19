@@ -9,23 +9,23 @@
  '(TeX-parse-self t t)
  '(TeX-save-query nil t)
  '(custom-safe-themes
-   (quote
-    ("f9aede508e587fe21bcfc0a85e1ec7d27312d9587e686a6f5afdbb0d220eab50" "251348dcb797a6ea63bbfe3be4951728e085ac08eee83def071e4d2e3211acc3" "a2cde79e4cc8dc9a03e7d9a42fabf8928720d420034b66aecc5b665bbf05d4e9" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" default)))
- '(lsp-auto-guess-root t t)
- '(lsp-enable-snippet nil t)
- '(lsp-ui-sideline-delay 1.5 t)
- '(lsp-ui-sideline-ignore-duplicate t t)
- '(lsp-ui-sideline-show-code-actions nil t)
- '(lsp-ui-sideline-show-hover nil t)
- '(lsp-ui-sideline-show-symbol nil t)
+   '("8b58ef2d23b6d164988a607ee153fd2fa35ee33efc394281b1028c2797ddeebb"))
+ '(helm-minibuffer-history-key "M-p")
+ '(lsp-completion-provider t t)
+ '(lsp-solargraph-library-directories
+   '("~/.rbenv/" "/usr/lib/ruby/" "~/.rvm/" "~/.gem/" "/opt/pkg/lib/ruby"))
  '(package-selected-packages
-   (quote
-    (airline-themes all-the-icons auctex auctex-latexmk auto-compile cargo cider clojure-mode cmake-font-lock cmake-mode comment-dwim-2 company company-auctex company-lsp crystal-mode diff-hl dockerfile-mode doom-modeline editorconfig evil evil-numbers exec-path-from-shell flycheck flycheck-clangcheck go-mode groovy-mode helm helm-company hl-todo lsp-mode lsp-ui markdown-mode minions monokai-theme paredit pdf-tools platformio-mode powerline-evil powershell projectile rainbow-blocks rainbow-delimiters rust-mode slime-repl-ansi-color sly sly-asdf sly-quicklisp smartparens use-package yaml-mode)))
-
- '(rust-format-on-save t t))
+   '(airline-themes all-the-icons auctex auctex-latexmk auto-compile cargo cider clojure-mode cmake-font-lock cmake-mode comment-dwim-2 company company-auctex company-box company-lsp crystal-mode diff-hl discover-my-major dockerfile-mode doom-modeline editorconfig ember-mode esup evil evil-collection evil-goggles exec-path-from-shell flycheck flycheck-clangcheck flycheck-rust gcmh gnutls go-mode groovy-mode handlebars-mode helm helm-company helpful hl-todo lsp-java lsp-mode lsp-ui magit markdown-mode minions monokai-theme nix-mode paredit pdf-tools platformio-mode powerline-evil powershell projectile rainbow-blocks rainbow-delimiters rust-mode slime-repl-ansi-color sly sly-asdf sly-quicklisp smartparens terraform-mode use-package yaml-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:inherit nil :stipple nil :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight semi-bold :height 120 :width normal :foundry "adobe" :family "SauceCodePro Nerd Font")))))
+ '(default ((t (:inherit nil :stipple nil :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight semi-bold :height 120 :width normal :foundry "adobe" :family "SauceCodePro Nerd Font"))))
+ '(evil-goggles-change-face ((t (:inherit diff-removed))))
+ '(evil-goggles-delete-face ((t (:inherit diff-removed))))
+ '(evil-goggles-paste-face ((t (:inherit diff-added))))
+ '(evil-goggles-undo-redo-add-face ((t (:inherit diff-added))))
+ '(evil-goggles-undo-redo-change-face ((t (:inherit diff-changed))))
+ '(evil-goggles-undo-redo-remove-face ((t (:inherit diff-removed))))
+ '(evil-goggles-yank-face ((t (:inherit diff-changed)))))

@@ -6,6 +6,9 @@
 
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 
+
+;; Variables and Options
+
 (column-number-mode t)          ;; Enable column information in the modeline.
 (save-place-mode t)             ;; Save our place in each file.
 (show-paren-mode t)             ;; Highlight matching braces.
@@ -22,8 +25,31 @@
   inhibit-startup-screen t      ;; Don't show the welcome screen.
   make-backup-files nil         ;; stop creating backup~ files
   auto-save-default nil         ;; stop creating #autosave# files
-  load-prefer-newer t)          ;; Prefer newest version of a file.
+  load-prefer-newer t           ;; Prefer newest version of a file.
+  gc-cons-threshold 64000000
+  garbage-collection-messages t)
 (fset 'yes-or-no-p 'y-or-n-p)   ;; Use 'y' instead of 'yes', etc.
+
+(when (version<= "26.0.50" emacs-version)
+  ;; Enable line numbers
+  (global-display-line-numbers-mode)
+
+  ;; Smooth scrolling...sorta.
+  (require 'pixel-scroll)
+  (setq pixel-resolution-fine-flag t)
+  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+  (setq mouse-wheel-progressive-speed nil)
+  (pixel-scroll-mode t))
+
+
+(add-hook 'sh-mode-hook
+  (lambda ()
+    (setq-local sh-basic-offset 4)))
+
+
+;; I WANT AUTO-WRAPPING, geez
+(auto-fill-mode)
+
 
 (require 'cc-vars)
 (setq c-default-style
@@ -31,25 +57,237 @@
      (awk-mode . "awk")
      (other . "bsd")))
 
-; Always start the server so that emacsclient can connect.
+
+;; Tell Emacs where "Custom" configuration can go, and then load it.
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(load custom-file)
+
+
+;; Always start the server so that emacsclient can connect.
 (require 'server)
 (unless (server-running-p)
   (server-start))
 
-; Tell Emacs where "Custom" configuration can go, and then load it.
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(load custom-file)
 
-(require 'init-package-setup)
+;; For packages that aren't in [M]ELPA, copy or git clone them into ~/.emacs.d/lisp.
+(let ((default-directory "~/.emacs.d/lisp"))
+  (normal-top-level-add-to-load-path '("."))
+  (normal-top-level-add-subdirs-to-load-path))
 
-(cond
-  ((string-equal system-type "darwin") (require 'init-os-darwin nil 'noerror))
-  ((string-equal system-type "gnu/linux") (require 'init-os-linux nil 'noerror)))
+;; Add MELPA to the package archives
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
-(require 'init-packages)
-(require 'init-ui)
-(require 'init-sly)
-(require 'init-local nil 'noerror)
+;; Work around a problem with ELPA and TLS 1.3 on Emacs < 27
+;; See https://www.reddit.com/r/emacs/comments/cdf48c/failed_to_download_gnu_archive/
+(require 'gnutls)
+(when (version<= emacs-version "26.99.0")
+  (defvar gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
+
+;; Not needed with use-package.
+;; (package-initialize)
+
+;; Use the "use-package" package to manage packages.
+;; Make sure it's loaded *after* package.el but *before* anything else.
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(eval-when-compile
+  (package-initialize)
+  (require 'use-package))
+
+;; If a package "used" below doesn't exist, install it.
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
+
+
+(use-package esup
+  :ensure t
+  ;; To use MELPA Stable use ":pin melpa-stable",
+  :pin melpa)
+
+
+;; GCMH - the Garbage Collector Magic Hack
+;; https://github.com/emacsmirror/gcmh
+(use-package gcmh
+  :config
+  (gcmh-mode 1))
+
+
+;; Make Emacs use the $PATH set up by the user's shell
+;; https://github.com/purcell/exec-path-from-shell
+(use-package exec-path-from-shell
+  :if (memq system-type '(usg-unix-v darwin gnu/linux))
+  ;; :init
+  ;; (setq exec-path-from-shell-arguments nil)
+  :config
+  (exec-path-from-shell-initialize))
+
+
+;; Project Interaction Library for Emacs
+;; https://github.com/bbatsov/projectile
+(use-package projectile
+  :config
+  (projectile-mode 1)
+  (setq projectile-require-project-root t)
+  (setq projectile-dynamic-mode-line nil)
+
+  (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  (projectile-register-project-type 'platformio '("platformio.ini"))
+  (setq projectile-project-root-files-bottom-up
+    '(".projectile" "platformio.ini" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs")))
+
+
+;; The extensible vi layer for Emacs.
+;; https://github.com/emacs-evil/evil
+(use-package evil
+  :init
+  ;; Set up for evil-collection.
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-undo-system 'undo-tree)
+
+  (setq-default evil-symbol-word-search t)
+  (setq evil-want-C-u-scroll t) ;; Take C-u back for scrolling a half-page up.
+
+  :config
+  (add-hook 'after-init-hook 'evil-normalize-keymaps)
+
+  (global-set-key (kbd "M-u") 'universal-argument)
+  ;; (evil-set-initial-state 'cider-repl-mode 'emacs)
+  ;; (evil-set-initial-state 'sly-mrepl-mode 'emacs)
+  ;; (evil-set-initial-state 'sly-db-mode 'emacs)
+  ;; (evil-set-initial-state 'xref--xref-buffer-mode 'emacs)
+
+  (evil-mode 1))
+
+(defun my/cursor-state-change ()
+  "Change the cursor to a bar in insert mode, and a box otherwise."
+  (if (string= evil-state "insert")
+    (setq cursor-type 'bar)
+    (setq cursor-type 'box)))
+
+(add-hook 'evil-insert-state-entry-hook #'my/cursor-state-change)
+(add-hook 'evil-insert-state-exit-hook #'my/cursor-state-change)
+
+
+;; A set of keybindings for evil-mode
+;; https://github.com/emacs-evil/evil-collection
+(use-package evil-collection
+  :after evil
+  :config (evil-collection-init))
+
+
+;; Displays a visual hint on evil edit operations
+;; https://github.com/edkolev/evil-goggles
+(use-package evil-goggles
+  :after evil
+  :config
+  (evil-goggles-mode)
+  (evil-goggles-use-diff-faces))
+
+
+;; undo-tree, required for evil `C-r` redo functionality
+;; https://www.emacswiki.org/emacs/UndoTree
+(use-package undo-tree
+  :config
+  (setq undo-tree-auto-save-history t)
+  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
+  (setq undo-limit (* 1024 1024)) ;; 10MB.
+  (setq undo-strong-limit undo-limit)
+  (setq undo-tree-visualizer-timestamps t)
+  (setq undo-tree-visualizer-diff t)
+  (global-undo-tree-mode 1))
+
+
+;; Modular in-buffer completion framework for Emacs
+;; https://github.com/company-mode/company-mode
+(use-package company
+  :config
+  (setq company-global-modes '(not comint-mode
+                                eshell-mode
+                                help-mode
+                                message-mode))
+  (setq company-idle-delay 0.3)
+  (setq company-tooltip-align-annotations t)
+
+  :hook (after-init . global-company-mode))
+
+
+;; A company front-end with icons
+;; https://github.com/sebastiencs/company-box
+(use-package company-box
+  :after company
+  :hook (company-mode . company-box-mode))
+
+
+;; Editorconfig reads .editorconfig files and configures settings accordingly.
+;; https://github.com/editorconfig/editorconfig-emacs
+(use-package editorconfig
+  :config (editorconfig-mode 1))
+
+
+;; A minor-mode menu for the mode line
+;; https://github.com/tarsius/minions
+(use-package minions
+  :config (minions-mode 1))
+
+
+;; Emacs incremental completion and selection narrowing framework
+;; https://github.com/emacs-helm/helm
+(use-package helm
+  :config
+  (helm-mode 1)
+  ;; Rebind M-x to use Helm mode.
+  (global-set-key (kbd "M-x") 'helm-M-x)
+  ;; Remap various functions to the Helm equivalent
+  (define-key global-map [remap find-file] 'helm-find-files)
+  (define-key global-map [remap occur] 'helm-occur)
+  (define-key global-map [remap list-buffers] 'helm-buffers-list)
+  (define-key global-map [remap dabbrev-expand] 'helm-dabbrev)
+  (define-key global-map [remap execute-extended-command] 'helm-M-x)
+  (unless (boundp 'completion-in-region-function)
+    (define-key lisp-interaction-mode-map [remap completion-at-point] 'helm-lisp-completion-at-point)
+    (define-key emacs-lisp-mode-map       [remap completion-at-point] 'helm-lisp-completion-at-point))
+
+  :custom
+  ;; Use 'rg' instead of 'ag' in Helm
+  (helm-grep-ag-command "rg --color=always --colors 'match:fg:black' --colors 'match:bg:yellow' --smart-case --no-heading --line-number %s %s %s")
+  (helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'"))
+  (helm-mode-fuzzy-match t)
+  (helm-completion-in-region-fuzzy-match t))
+
+
+;; Package for highlighting uncommitted changes
+;; https://github.com/dgutov/diff-hl
+(use-package diff-hl
+  :config (global-diff-hl-mode))
+
+
+;; On-the-fly spell checking
+;; https://www.emacswiki.org/emacs/FlySpell
+;; Requires either ispell, aspell, or hunspell
+;; (Preferring aspell right now)
+;; $ pkgin in aspell aspell-en
+;;
+;; Oh btw, this isn't an actual package so we're abusing use-package here (hence, ":ensure nil").
+(use-package flyspell
+  :ensure nil
+  :defer 1
+
+  :custom
+  (flyspell-issue-message-flag nil)
+  (flyspell-issue-welcome-flag nil)
+  (flyspell-mode 1)
+
+  :bind ("<f2>" . flyspell-mode)
+
+  :hook
+  ((text-mode latex-mode) . flyspell-mode)
+  (prog-mode . flyspell-prog-mode))
+
 
 (require 'ispell)
 (cond
@@ -61,11 +299,324 @@
   ((executable-find "aspell")
     (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US"))))
 
-(add-hook 'text-mode 'flyspell-mode)
-(add-hook 'latex-mode 'flyspell-mode)
 
-; I WANT AUTO-WRAPPING, geez
-(auto-fill-mode)
+;; A replacement for the emacs' built-in command `comment-dwim'.
+;; https://github.com/remyferre/comment-dwim-2
+(use-package comment-dwim-2
+  :config (global-set-key (kbd "M-;") 'comment-dwim-2))
+
+
+;; Rust support
+;; https://github.com/rust-lang/rust-mode
+(use-package rust-mode
+  :custom (rust-format-on-save t))
+
+
+;; Better Rust/Cargo support for Flycheck
+;; https://github.com/flycheck/flycheck-rust
+(use-package flycheck-rust
+  :after rust-mode
+  :hook (flycheck-mode . flycheck-rust-setup))
+
+
+;; Cargo mode gives you a set of key combinations to perform Cargo tasks within your Rust projects.
+;; https://github.com/kwrooijen/cargo.el
+(use-package cargo
+  :requires (rust-mode)
+  :hook (rust-mode . cargo-minor-mode))
+
+
+; Client/library for the Language Server Protocol
+;; https://emacs-lsp.github.io/lsp-mode/
+;;
+;; Required things
+;; $ gem install solargraph
+;; $ python3 -m pip install cmake-language-server
+;; $ python3 -m pip install python-language-server 'python-language-server[all]' pyls-mypy future pyls-isort pyls-black
+;; # pkgin in clang-tools-extra
+;;
+;; Clojure: https://github.com/clojure-lsp/clojure-lsp looks promising
+(use-package lsp-mode
+  :custom
+  (read-process-output-max (* 1024 1024))
+  (lsp-auto-guess-root t)
+  (lsp-enable-snippet nil)
+  (lsp-keep-workspace-alive nil)
+  (lsp-prefer-capf t)
+  (lsp-pyls-configuration-sources ["flake8" "pycodestyle"])
+
+  :hook
+  ((c-mode c++-mode rust-mode go-mode python-mode ruby-mode rust-mode) . lsp))
+
+
+;; UI integrations for lsp-mode
+;; https://emacs-lsp.github.io/lsp-ui/
+(use-package lsp-ui
+  :custom
+  (lsp-ui-sideline-delay 1.5)
+  (lsp-ui-sideline-ignore-duplicate t)
+  (lsp-ui-sideline-show-code-actions nil)
+  (lsp-ui-sideline-show-hover nil)
+  (lsp-ui-sideline-show-symbol nil)
+
+  :hook (lsp-mode . lsp-ui-mode))
+
+;; Java LSP integration
+;; https://emacs-lsp.github.io/lsp-java/
+(use-package lsp-java
+  :config (add-hook 'java-mode-hook #'lsp))
+
+
+;; A tree layout file explorer for Emacs
+;; https://github.com/Alexander-Miller/treemacs/
+(use-package treemacs
+  :defer t
+  :custom
+  (treemacs-project-follow-cleanup t)
+  :bind
+  (:map global-map
+    ("<f9>" . treemacs-select-window)))
+
+;; Evil mode integration for treemacs
+;; https://github.com/Alexander-Miller/treemacs/blob/master/src/extra/treemacs-evil.el
+(use-package treemacs-evil
+  :config
+  (define-key evil-treemacs-state-map (kbd "TAB") #'treemacs-TAB-action))
+
+
+;; Integration for treemode and lsp-mode
+;; https://github.com/emacs-lsp/lsp-treemacs
+(use-package lsp-treemacs
+  :after (treemacs lsp-mode)
+  :config
+  (lsp-treemacs-sync-mode 1)
+  :bind
+  (:map global-map
+    ("<f11>" . lsp-treemacs-errors-list)))
+
+
+;; A modern, on-the-fly syntac checking extension.
+;; https://www.flycheck.org/en/latest/
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+
+
+;; A groovy major mode, grails minor mode, and a groovy inferior mode.
+;; https://github.com/Groovy-Emacs-Modes/groovy-emacs-modes
+(use-package groovy-mode)
+
+
+;; Mode for the Go programming language
+;; https://github.com/dominikh/go-mode.el
+(use-package go-mode
+  :mode ("\\.go\\'")
+  :config (setq gofmt-command "goimports")
+  :hook (before-save . gofmt-before-save))
+
+
+;; Syntax highlighting for .vimrc/_vimrc files
+;; https://github.com/mcandre/vimrc-mode
+(use-package vimrc-mode)
+
+
+;; Highlight TODO keywords
+;; https://github.com/tarsius/hl-todo
+(use-package hl-todo
+  :config (global-hl-todo-mode))
+
+
+;; Advanced, type aware, highlight support for CMake
+;; https://github.com/Lindydancer/cmake-font-lock/
+(use-package cmake-font-lock
+  :hook (cmake-mode .))
+
+
+;; PlatformIO integration
+;; https://github.com/ZachMassia/PlatformIO-Mode/
+(use-package platformio-mode
+  :requires (projectile)
+  :hook ((c-mode c++-mode) . platformio-conditionally-enable))
+
+
+;; Arduino project files are just C++, really
+(add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
+
+
+;; Adds LatexMk support to AUCTeX.
+;; https://github.com/tom-tan/auctex-latexmk
+(use-package auctex-latexmk
+  :requires (auctex))
+
+
+;; LaTeX support
+;; https://www.gnu.org/software/emacs/manual/html_node/emacs/TeX-Mode.html
+(use-package latex
+  :ensure auctex
+  :init
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (setq-default TeX-master nil)
+  (setq reftex-plug-into-AUCTeX t)
+  (setq TeX-PDF-mode t)
+  :config (auctex-latexmk-setup)
+  :hook
+  (LaTeX-mode . company-auctex-init)
+  (LaTeX-mode . LaTeX-math-mode)
+  (LaTeX-mode . turn-on-reftex)
+  (TeX-mode . (lambda () (setq TeX-command-default "latexmk"))))
+
+(add-hook 'LaTeX-mode-hook
+  (lambda ()
+    (push
+      '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
+         :help "Run latexmk on file")
+      TeX-command-list)))
+
+
+;; ParEdit helps keep parentheses balanced.
+;; https://www.emacswiki.org/emacs/ParEdit
+;; also: http://danmidwood.com/content/2014/11/21/animated-paredit.html
+(use-package paredit
+  :hook ((clojure-mode lisp-mode emacs-lisp-mode) . paredit-mode))
+
+
+;; Highlights delimiters such as parentheses, brackets or braces according to their depth.
+;; https://github.com/Fanael/rainbow-delimiters/
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+
+;; CIDER is the Clojure(Script) Interactive Development Environment that Rocks
+;; https://docs.cider.mx
+(use-package cider
+  :config (setq cider-repl-display-help-banner nil)
+  :requires (clojure-mode))
+
+
+;; Support for the Clojure(Script) programming language
+;; https://github.com/clojure-emacs/clojure-mode
+(use-package clojure-mode
+  :requires (rainbox-delimiters))
+
+
+;; Mode for handling Dockerfiles
+;; https://github.com/spotify/dockerfile-mode
+(use-package dockerfile-mode
+  :mode "Dockerfile.*\\'")
+
+
+;; Discover key bindings and their meaning for the current Emacs major mode
+;; https://github.com/jguenther/discover-my-major
+(use-package discover-my-major)
+
+
+;; Mode for editing Markdown-formatted text
+;; https://jblevins.org/projects/markdown-mode/
+(use-package markdown-mode
+  :config
+  (setq markdown-fontify-code-blocks-natively t)
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+          ("\\.md\\'" . markdown-mode)
+          ("\\.markdown\\'" . markdown-mode)))
+
+
+;; Major mode for editing YAML files
+;; https://github.com/yoshiki/yaml-mode
+(use-package yaml-mode)
+
+
+(require 'hl-line)
+(set-face-background hl-line-face "#262626")
+
+
+(use-package monokai-theme)
+(load-theme 'monokai)
+
+
+;; Put icons in various places to spruce this place up a bit.
+;; https://github.com/domtronn/all-the-icons.el
+(use-package all-the-icons)
+
+;; doom-modeline is a modeline taken from the Doom Emacs project.
+;; https://github.com/seagle0128/doom-modeline
+(use-package doom-modeline
+  :after (all-the-icons)
+  :custom
+  (doom-modeline-buffer-file-name-style 'relative-from-project)
+  (doom-modeline-indent-info t)
+  :hook (after-init . doom-modeline-mode))
+
+(defun enable-doom-icons ()
+  "Enable icons in the modeline only for graphical frames."
+  (setq doom-modeline-icon (display-graphic-p)))
+
+(defun setup-frame-doom (frame)
+  "Enable icons in the modeline only if FRAME is a graphical frame."
+  (with-selected-frame frame
+    (enable-doom-icons)))
+
+(add-hook 'after-make-frame-functions #'setup-frame-doom)
+
+
+;; A Common Lisp REPL
+;; https://github.com/joaotavora/sly
+(use-package sly
+  :config
+  (setq sly-lisp-implementations
+    `((sbcl ("/usr/local/bin/sbcl" "--noinform" "--no-linedit") :coding-system utf-8-unix)
+       (ccl ,(expand-file-name "~/bin/ccl")))))
+
+
+;; Quicklisp support for SLY
+;; https://github.com/joaotavora/sly-quicklisp
+(use-package sly-quicklisp :after sly)
+
+
+;; ASDF contrib for SLY
+;; https://github.com/mmgeorge/sly-asdf
+(use-package sly-asdf :after sly)
+
+
+;; A better Emacs *help* buffer.
+;; https://github.com/Wilfred/helpful
+(use-package helpful
+  :bind
+  ("C-h f" . helpful-callable)
+  ("C-h v" . helpful-variable)
+  ("C-h k" . helpful-key)
+  ("C-c C-d" . helpful-at-point))
+
+
+(defvar electrify-return-match
+  "[\]}\)\"]"
+  "If this regexp matches the text after the cursor, do an \"electric\" return.")
+
+(defun electrify-return-if-match (arg)
+  "If the text after the cursor matches `electrify-return-match' then
+  open and indent an empty line between the cursor and the text.  Move the
+  cursor to the new line."
+  (interactive "P")
+  (let ((case-fold-search nil))
+    (if (looking-at electrify-return-match)
+      (save-excursion (newline-and-indent)))
+    (newline arg)
+    (indent-according-to-mode)))
+
+(global-set-key (kbd "RET") 'electrify-return-if-match)
+
+
+;; Make the Emacs GUI frame arguably prettier on macOS
+(when (string-equal system-type "darwin")
+  (add-to-list 'default-frame-alist'(ns-transparent-titlebar . t))
+  (add-to-list 'default-frame-alist'(ns-appearance . light)))
+
+
+;; trackpad / mouse wheel scrolls buffer
+(global-set-key [mouse-4] 'scroll-down-line)
+(global-set-key [mouse-5] 'scroll-up-line)
+
 
 (provide 'init)
 ;;; init.el ends here
