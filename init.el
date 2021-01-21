@@ -546,7 +546,7 @@
 
 
 (use-package monokai-theme)
-(load-theme 'monokai)
+(load-theme 'monokai t)
 
 
 ;; Put icons in various places to spruce this place up a bit.
