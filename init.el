@@ -26,7 +26,7 @@
   make-backup-files nil         ;; stop creating backup~ files
   auto-save-default nil         ;; stop creating #autosave# files
   load-prefer-newer t           ;; Prefer newest version of a file.
-  gc-cons-threshold 64000000
+  gc-cons-threshold 100000000
   garbage-collection-messages t)
 (fset 'yes-or-no-p 'y-or-n-p)   ;; Use 'y' instead of 'yes', etc.
 
@@ -137,6 +137,7 @@
   (projectile-mode 1)
   (setq projectile-require-project-root t)
   (setq projectile-dynamic-mode-line nil)
+  (setq projectile-indexing-method 'native)
 
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
@@ -214,9 +215,10 @@
   (setq company-global-modes '(not comint-mode
                                 eshell-mode
                                 help-mode
-                                message-mode))
-  (setq company-idle-delay 0.3)
-  (setq company-tooltip-align-annotations t)
+                                message-mode)
+    company-idle-delay 0.2
+    company-minimum-prefix-length 1
+    company-tooltip-align-annotations t)
 
   :hook (after-init . global-company-mode))
 
@@ -285,13 +287,7 @@
   :custom
   (flyspell-issue-message-flag nil)
   (flyspell-issue-welcome-flag nil)
-  (flyspell-mode 1)
-
-  :bind ("<f2>" . flyspell-mode)
-
-  :hook
-  ((text-mode latex-mode) . flyspell-mode)
-  (prog-mode . flyspell-prog-mode))
+  (flyspell-mode 0))
 
 
 (require 'ispell)
@@ -313,9 +309,15 @@
 
 ;; Rust support
 ;; https://github.com/rust-lang/rust-mode
-(use-package rust-mode
-  :custom (rust-format-on-save t))
-
+;; (use-package rust-mode
+;;   :custom (rust-format-on-save t))
+;;
+;; https://github.com/brotzeit/rustic
+(use-package rustic
+  :custom
+  (rustic-format-on-save nil)
+  (rustic-lsp-format t)
+  (rustic-lsp-server 'rust-analyzer))
 
 ;; Better Rust/Cargo support for Flycheck
 ;; https://github.com/flycheck/flycheck-rust
@@ -326,9 +328,9 @@
 
 ;; Cargo mode gives you a set of key combinations to perform Cargo tasks within your Rust projects.
 ;; https://github.com/kwrooijen/cargo.el
-(use-package cargo
-  :requires (rust-mode)
-  :hook (rust-mode . cargo-minor-mode))
+;; (use-package cargo
+;;   :requires (rust-mode)
+;;   :hook (rust-mode . cargo-minor-mode))
 
 
 ; Client/library for the Language Server Protocol
@@ -343,25 +345,40 @@
 ;; Clojure: https://github.com/clojure-lsp/clojure-lsp looks promising
 (use-package lsp-mode
   :custom
-  (read-process-output-max (* 1024 1024))
   (lsp-auto-guess-root t)
-  (lsp-enable-snippet nil)
+  ;(lsp-enable-snippet nil)
+  ;(lsp-idle-delay 1.0)
   (lsp-keep-workspace-alive nil)
-  (lsp-prefer-capf t)
+  (read-process-output-max (* 2 1024 1024))
+
   (lsp-pyls-configuration-sources ["flake8" "pycodestyle"])
+  (lsp-rust-server 'rust-analyzer)
+  (lsp-rust-analyzer-cargo-watch-command "clippy")
+  (lsp-rust-analyzer-diagnostics-enable-experimental nil)
+
+  :bind ("<f2>" . lsp-rename)
 
   :hook
-  ((c-mode c++-mode rust-mode go-mode python-mode ruby-mode rust-mode) . lsp))
+  ((c-mode c++-mode rust-mode rustic-mode go-mode python-mode ruby-mode) . lsp)
+  (before-save . my/lsp-format))
 
+(defun my/lsp-format ()
+  "Enable LSP formatting for Rust."
+  (when (member major-mode '(rust-mode rustic-mode))
+    (lsp-format-buffer)))
 
 ;; UI integrations for lsp-mode
 ;; https://emacs-lsp.github.io/lsp-ui/
 (use-package lsp-ui
   :custom
-  (lsp-ui-sideline-delay 1.5)
+  (lsp-ui-doc-enable nil)
+  (lsp-headerline-breadcrumb-icons-enable nil)
+  (lsp-ui-peek-always-show t)
+  (lsp-ui-sideline-delay 0.75)
   (lsp-ui-sideline-ignore-duplicate t)
   (lsp-ui-sideline-show-code-actions nil)
   (lsp-ui-sideline-show-hover nil)
+  (lsp-ui-sideline-show-hover t)
   (lsp-ui-sideline-show-symbol nil)
 
   :hook (lsp-mode . lsp-ui-mode))
@@ -493,6 +510,10 @@
 ;; also: http://danmidwood.com/content/2014/11/21/animated-paredit.html
 (use-package paredit
   :hook ((clojure-mode lisp-mode emacs-lisp-mode) . paredit-mode))
+
+(use-package evil-paredit
+  :hook (prog-mode . paredit-mode)
+  :requires (paredit-mode))
 
 
 ;; Highlights delimiters such as parentheses, brackets or braces according to their depth.
