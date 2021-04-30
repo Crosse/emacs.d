@@ -328,7 +328,7 @@
               (lib-path (f-join sysroot "lib/rustlib/src/rust/src"))
               (src-path (cond
                           ((file-exists-p library-path) library-path)
-                          ((file-exists-p) lib-path) lib-path)))
+                          ((file-exists-p lib-path) lib-path))))
         (when (file-exists-p src-path)
           src-path)
         src-path))
@@ -353,6 +353,11 @@
   :after rust-mode
   :hook (flycheck-mode . flycheck-rust-setup))
 
+
+(defun my/lsp-format ()
+  "Enable LSP formatting for Rust."
+  (when (member major-mode '(rust-mode rustic-mode))
+    (lsp-format-buffer)))
 
 ; Client/library for the Language Server Protocol
 ;; https://emacs-lsp.github.io/lsp-mode/
@@ -382,11 +387,6 @@
   :hook
   ((c-mode c++-mode rust-mode rustic-mode go-mode python-mode ruby-mode) . lsp)
   (before-save . my/lsp-format))
-
-(defun my/lsp-format ()
-  "Enable LSP formatting for Rust."
-  (when (member major-mode '(rust-mode rustic-mode))
-    (lsp-format-buffer)))
 
 ;; UI integrations for lsp-mode
 ;; https://emacs-lsp.github.io/lsp-ui/
