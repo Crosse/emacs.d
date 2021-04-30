@@ -130,6 +130,11 @@
   (exec-path-from-shell-initialize))
 
 
+(use-package shfmt
+  :hook (sh-mode . shfmt-on-save-mode)
+  :custom (shfmt-arguments '("-i" "4")))
+
+
 ;; Project Interaction Library for Emacs
 ;; https://github.com/bbatsov/projectile
 (use-package projectile
@@ -444,6 +449,21 @@
 
 ;; A modern, on-the-fly syntac checking extension.
 ;; https://www.flycheck.org/en/latest/
+;;
+;; flycheck can be used in place of, or in tandem with, emacs-lsp.
+;; That said, if there is already an LSP server installed and useable for a
+;; certain file type, it may already have flycheck integration and/or you may
+;; just not want flycheck checking in addition to the LSP.
+;;
+;; A list of useful commands to have installed to enable flycheck:
+;; - C/C++: http://cppcheck.sourceforge.net/
+;; - Dockerfiles: https://github.com/hadolint/hadolint
+;; - Markdown: https://github.com/markdownlint/markdownlint/
+;; - Prose (text, Markdown): https://github.com/amperser/proselint/
+;; - RPM spec files: https://sourceforge.net/projects/rpmlint/
+;; - Shell scripts:
+;;   - shfmt: https://github.com/mvdan/sh
+;;   - https://github.com/koalaman/shellcheck/
 (use-package flycheck
   :ensure t
   :init (global-flycheck-mode))
@@ -452,6 +472,11 @@
 ;; A groovy major mode, grails minor mode, and a groovy inferior mode.
 ;; https://github.com/Groovy-Emacs-Modes/groovy-emacs-modes
 (use-package groovy-mode)
+
+
+;; Extends the builtin js-mode to add better syntax highlighting for JSON
+;; https://github.com/joshwnj/json-mode
+(use-package json-mode)
 
 
 ;; Mode for the Go programming language
