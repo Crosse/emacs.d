@@ -351,7 +351,7 @@
 ;; Cargo mode gives you a set of key combinations to perform Cargo tasks within your Rust projects.
 ;; https://github.com/kwrooijen/cargo.el
 ;; (use-package cargo
-;;   :requires (rust-mode)
+;;   :requires rust-mode
 ;;   :hook (rust-mode . cargo-minor-mode))
 
 
@@ -479,7 +479,7 @@
 ;; PlatformIO integration
 ;; https://github.com/ZachMassia/PlatformIO-Mode/
 (use-package platformio-mode
-  :requires (projectile)
+  :requires projectile
   :hook ((c-mode c++-mode) . platformio-conditionally-enable))
 
 
@@ -490,7 +490,7 @@
 ;; Adds LatexMk support to AUCTeX.
 ;; https://github.com/tom-tan/auctex-latexmk
 (use-package auctex-latexmk
-  :requires (auctex))
+  :requires auctex)
 
 
 ;; Only required here so that "reftex-plug-into-AUCTex" isn't seen as a free variable down below
@@ -548,13 +548,13 @@
 ;; https://docs.cider.mx
 (use-package cider
   :config (setq cider-repl-display-help-banner nil)
-  :requires (clojure-mode))
+  :requires clojure-mode)
 
 
 ;; Support for the Clojure(Script) programming language
 ;; https://github.com/clojure-emacs/clojure-mode
 (use-package clojure-mode
-  :requires (rainbox-delimiters))
+  :requires rainbox-delimiters)
 
 
 ;; Mode for handling Dockerfiles
