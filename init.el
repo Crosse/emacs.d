@@ -292,15 +292,18 @@
   (flyspell-mode 0))
 
 
-(require 'ispell)
-(cond
-  ((executable-find "hunspell")
-    (setq ispell-program-name "hunspell")
-    (setq ispell-local-dictionary "en_US")
-    (setq ispell-local-dictionary-alist
-      '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8))))
-  ((executable-find "aspell")
-    (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US"))))
+(use-package ispell
+  :ensure nil
+  :defer 1
+  :custom (ispell-silently-savep t)
+  :init (cond
+          ((executable-find "hunspell")
+            (setq ispell-program-name "hunspell"
+              ispell-local-dictionary "en_US"
+              ispell-local-dictionary-alist '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8))))
+
+          ((executable-find "aspell")
+            (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US")))))
 
 
 ;; A replacement for the emacs' built-in command `comment-dwim'.
