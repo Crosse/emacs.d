@@ -218,7 +218,7 @@
                                 eshell-mode
                                 help-mode
                                 message-mode)
-    company-idle-delay 0.2
+    company-idle-delay 0.1
     company-minimum-prefix-length 1
     company-tooltip-align-annotations t)
 
