@@ -308,6 +308,25 @@
 (use-package comment-dwim-2
   :config (global-set-key (kbd "M-;") 'comment-dwim-2))
 
+(defun my/rust-src-path ()
+  "Find Rust's source path."
+  (require 'f)
+  (require 's)
+  (or
+    ;(getenv "RUST_SRC_PATH")
+    (when (executable-find "rustc")
+      (let* ((sysroot (s-trim-right
+                        (shell-command-to-string
+                          (format "%s --print sysroot" (executable-find "rustc")))))
+              (library-path (f-join sysroot "lib/rustlib/src/rust/library"))
+              (lib-path (f-join sysroot "lib/rustlib/src/rust/src"))
+              (src-path (cond
+                          ((file-exists-p library-path) library-path)
+                          ((file-exists-p) lib-path) lib-path)))
+        (when (file-exists-p src-path)
+          src-path)
+        src-path))
+    "/usr/local/src/rust/src"))
 
 ;; Rust support
 ;; https://github.com/rust-lang/rust-mode
@@ -319,7 +338,8 @@
   :custom
   (rustic-format-on-save nil)
   (rustic-lsp-format t)
-  (rustic-lsp-server 'rust-analyzer))
+  (rustic-lsp-server 'rust-analyzer)
+  (rustic-racer-src-path (my/rust-src-path)))
 
 ;; Better Rust/Cargo support for Flycheck
 ;; https://github.com/flycheck/flycheck-rust
