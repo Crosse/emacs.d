@@ -17,7 +17,7 @@
 (global-hl-line-mode t)         ;; Highlight the entire line ("cursorline" in Vim).
 (xterm-mouse-mode)              ;; Enable mouse mode in terminals that support it.
 (which-function-mode 1)         ;; Display the current function name in the mode line.
-(auto-fill-mode t)              ;; Automatically break long lines at the fill-column.
+
 (setq
   vc-follow-symlinks t          ;; Always follow symlinks.
   scroll-margin 3               ;; Make sure there are at least 3 lines above or below the current line on-screen.
@@ -35,6 +35,10 @@
   (global-display-line-numbers-mode))
 
 
+;; Automatically break long lines at the fill-column.
+(setq-default auto-fill-function 'do-auto-fill)
+
+
 ;; Smooth scrolling...sorta.
 (require 'pixel-scroll)
 (setq pixel-resolution-fine-flag t)
@@ -46,10 +50,6 @@
 (add-hook 'sh-mode-hook
   (lambda ()
     (setq-local sh-basic-offset 4)))
-
-
-;; I WANT AUTO-WRAPPING, geez
-(auto-fill-mode)
 
 
 (require 'cc-vars)
@@ -103,7 +103,6 @@
 ;; If a package "used" below doesn't exist, install it.
 (require 'use-package-ensure)
 (setq use-package-always-ensure t)
-
 
 (use-package esup
   :ensure t
