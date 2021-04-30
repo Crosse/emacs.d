@@ -138,6 +138,8 @@
   (setq projectile-require-project-root t)
   (setq projectile-dynamic-mode-line nil)
   (setq projectile-indexing-method 'native)
+  (setq projectile-globally-ignored-directories
+    (append projectile-globally-ignored-directories '("target" "build")))
 
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
