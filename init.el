@@ -292,8 +292,7 @@
 
   :custom
   (flyspell-issue-message-flag nil)
-  (flyspell-issue-welcome-flag nil)
-  (flyspell-mode 0))
+  (flyspell-issue-welcome-flag nil))
 
 
 (use-package ispell
@@ -353,13 +352,6 @@
 (use-package flycheck-rust
   :after rust-mode
   :hook (flycheck-mode . flycheck-rust-setup))
-
-
-;; Cargo mode gives you a set of key combinations to perform Cargo tasks within your Rust projects.
-;; https://github.com/kwrooijen/cargo.el
-;; (use-package cargo
-;;   :requires rust-mode
-;;   :hook (rust-mode . cargo-minor-mode))
 
 
 ; Client/library for the Language Server Protocol
