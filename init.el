@@ -531,12 +531,10 @@
 ;; https://www.emacswiki.org/emacs/ParEdit
 ;; also: http://danmidwood.com/content/2014/11/21/animated-paredit.html
 (use-package paredit
-  :hook ((clojure-mode lisp-mode emacs-lisp-mode) . paredit-mode))
+  :hook (prog-mode . paredit-mode))
 
 (use-package evil-paredit
-  :hook (prog-mode . paredit-mode)
-  :requires (paredit-mode))
-
+  :hook (prog-mode . evil-paredit-mode))
 
 ;; Highlights delimiters such as parentheses, brackets or braces according to their depth.
 ;; https://github.com/Fanael/rainbow-delimiters/
