@@ -26,7 +26,7 @@
   make-backup-files nil         ;; stop creating backup~ files
   auto-save-default nil         ;; stop creating #autosave# files
   load-prefer-newer t           ;; Prefer newest version of a file.
-  gc-cons-threshold 100000000
+  ;gc-cons-threshold 100000000
   garbage-collection-messages t)
 (fset 'yes-or-no-p 'y-or-n-p)   ;; Use 'y' instead of 'yes', etc.
 
@@ -114,6 +114,7 @@
 ;; https://github.com/emacsmirror/gcmh
 (use-package gcmh
   :config
+  (setq gcmh-high-cons-threshold 262144000) ; 250MiB
   (gcmh-mode 1))
 
 
@@ -157,12 +158,12 @@
 (use-package evil
   :init
   ;; Set up for evil-collection.
-  (setq evil-want-integration t)
-  (setq evil-want-keybinding nil)
-  (setq evil-undo-system 'undo-tree)
-
+  (setq evil-want-integration t
+    evil-want-keybinding nil
+    evil-undo-system 'undo-tree
+    ;; Take C-u back for scrolling a half-page up.
+    evil-want-C-u-scroll t)
   (setq-default evil-symbol-word-search t)
-  (setq evil-want-C-u-scroll t) ;; Take C-u back for scrolling a half-page up.
 
   :config
   (add-hook 'after-init-hook 'evil-normalize-keymaps)
@@ -312,7 +313,9 @@
 ;; A replacement for the emacs' built-in command `comment-dwim'.
 ;; https://github.com/remyferre/comment-dwim-2
 (use-package comment-dwim-2
-  :config (global-set-key (kbd "M-;") 'comment-dwim-2))
+  :config
+  (global-set-key (kbd "M-;") 'comment-dwim-2)
+  (setq comment-dwim-2--inline-comment-behavior 'reindent-comment))
 
 (defun my/rust-src-path ()
   "Find Rust's source path."
@@ -550,10 +553,10 @@
 ;; https://www.emacswiki.org/emacs/ParEdit
 ;; also: http://danmidwood.com/content/2014/11/21/animated-paredit.html
 (use-package paredit
-  :hook (prog-mode . paredit-mode))
+  :hook ((clojure-mode lisp-mode emacs-lisp-mode) . paredit-mode))
 
 (use-package evil-paredit
-  :hook (prog-mode . evil-paredit-mode))
+  :hook ((clojure-mode lisp-mode emacs-lisp-mode) . evil-paredit-mode))
 
 ;; Highlights delimiters such as parentheses, brackets or braces according to their depth.
 ;; https://github.com/Fanael/rainbow-delimiters/

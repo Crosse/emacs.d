@@ -5,6 +5,7 @@
 auto-save-list/
 elpa/
 eshell/
+lisp/init-local.el
 places
 projectile-bookmarks.eld
 projectile.cache
@@ -13,3 +14,4 @@ server/
 tramp
 transient/
 undo/
+url/
