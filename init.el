@@ -47,6 +47,7 @@
 (pixel-scroll-mode t)
 
 
+(eval-when-compile (require 'sh-script nil t))
 (add-hook 'sh-mode-hook
   (lambda ()
     (setq-local sh-basic-offset 4)))
@@ -120,6 +121,7 @@
 
 ;; Make Emacs use the $PATH set up by the user's shell
 ;; https://github.com/purcell/exec-path-from-shell
+(eval-when-compile (require 'exec-path-from-shell nil t))
 (use-package exec-path-from-shell
   :if (memq system-type '(usg-unix-v darwin gnu/linux))
   :init
@@ -516,7 +518,7 @@
 
 
 ;; Only required here so that "reftex-plug-into-AUCTex" isn't seen as a free variable down below
-(require 'reftex)
+(eval-when-compile (require 'reftex))
 
 ;; LaTeX support
 ;; https://www.gnu.org/software/emacs/manual/html_node/emacs/TeX-Mode.html
