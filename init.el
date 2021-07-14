@@ -125,12 +125,10 @@
 (use-package exec-path-from-shell
   :if (memq system-type '(usg-unix-v darwin gnu/linux))
   :init
-  (setq exec-path-from-shell-check-startup-files nil)
-  ;; (setq exec-path-from-shell-arguments nil)
+  (setq exec-path-from-shell-arguments '("-l"))
 
   :config
   (exec-path-from-shell-initialize))
-
 
 (use-package shfmt
   :hook (sh-mode . shfmt-on-save-mode)
