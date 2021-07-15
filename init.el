@@ -35,6 +35,9 @@
   (global-display-line-numbers-mode))
 
 
+;; NOTE: (almost) every invocation of eval-{when,and}-compile in this file is for no other reason
+;; than to satisfy flycheck.
+
 ;; Automatically break long lines at the fill-column.
 (setq-default auto-fill-function 'do-auto-fill)
 
@@ -47,7 +50,7 @@
 (pixel-scroll-mode t)
 
 
-(eval-when-compile (require 'sh-script nil t))
+(eval-and-compile (require 'sh-script nil t))
 (add-hook 'sh-mode-hook
   (lambda ()
     (setq-local sh-basic-offset 4)))
@@ -121,7 +124,7 @@
 
 ;; Make Emacs use the $PATH set up by the user's shell
 ;; https://github.com/purcell/exec-path-from-shell
-(eval-when-compile (require 'exec-path-from-shell nil t))
+(eval-and-compile (require 'exec-path-from-shell nil t))
 (use-package exec-path-from-shell
   :if (memq system-type '(usg-unix-v darwin gnu/linux))
   :init
@@ -137,6 +140,7 @@
 
 ;; Project Interaction Library for Emacs
 ;; https://github.com/bbatsov/projectile
+(eval-and-compile (require 'projectile nil t))
 (use-package projectile
   :config
   (projectile-mode 1)
@@ -195,6 +199,7 @@
 
 ;; Displays a visual hint on evil edit operations
 ;; https://github.com/edkolev/evil-goggles
+(eval-and-compile (require 'evil-goggles nil t))
 (use-package evil-goggles
   :after evil
   :config
@@ -317,10 +322,11 @@
   (global-set-key (kbd "M-;") 'comment-dwim-2)
   (setq comment-dwim-2--inline-comment-behavior 'reindent-comment))
 
+(eval-and-compile
+  (require 'f nil t)
+  (require 's nil t))
 (defun my/rust-src-path ()
   "Find Rust's source path."
-  (require 'f)
-  (require 's)
   (or
     ;(getenv "RUST_SRC_PATH")
     (when (executable-find "rustc")
@@ -425,6 +431,7 @@
 
 ;; Evil mode integration for treemacs
 ;; https://github.com/Alexander-Miller/treemacs/blob/master/src/extra/treemacs-evil.el
+(eval-and-compile (require 'treemacs-interface nil t))
 (use-package treemacs-evil
   :config
   (define-key evil-treemacs-state-map (kbd "TAB") #'treemacs-TAB-action))
@@ -516,7 +523,7 @@
 
 
 ;; Only required here so that "reftex-plug-into-AUCTex" isn't seen as a free variable down below
-(eval-when-compile (require 'reftex))
+(eval-and-compile (require 'reftex))
 
 ;; LaTeX support
 ;; https://www.gnu.org/software/emacs/manual/html_node/emacs/TeX-Mode.html
