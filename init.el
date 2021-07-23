@@ -207,6 +207,18 @@
   (evil-goggles-use-diff-faces))
 
 
+(defun my/package-file-p (&optional filename _noerror)
+  "Return t if FILENAME resides under ~/.emacs.d/elpa."
+  (interactive "GEnter filename: ")
+  (let* ((elpa (expand-file-name "~/.emacs.d/elpa/"))
+         (fname (if filename filename buffer-file-name))
+         (expanded (expand-file-name fname)))
+    (if (string-prefix-p elpa expanded)
+      (progn
+        (message "file under %s" elpa)
+        t)
+      nil)))
+
 ;; undo-tree, required for evil `C-r` redo functionality
 ;; https://www.emacswiki.org/emacs/UndoTree
 (use-package undo-tree
@@ -217,6 +229,9 @@
   (setq undo-strong-limit undo-limit)
   (setq undo-tree-visualizer-timestamps t)
   (setq undo-tree-visualizer-diff t)
+  (advice-add 'undo-tree-make-history-save-file-name :filter-return #'(lambda (FILENAME) (concat FILENAME ".gz")))
+  (advice-add 'undo-tree-load-history :before-until #'my/package-file-p)
+  (advice-add 'undo-tree-save-history :before-until #'my/package-file-p)
   (global-undo-tree-mode 1))
 
 
