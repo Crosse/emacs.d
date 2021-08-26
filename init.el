@@ -496,6 +496,9 @@
 (use-package blacken
   :hook (python-mode . blacken-mode))
 
+(use-package pyvenv
+  :config (pyvenv-mode 1))
+
 ;; A groovy major mode, grails minor mode, and a groovy inferior mode.
 ;; https://github.com/Groovy-Emacs-Modes/groovy-emacs-modes
 (use-package groovy-mode)
