@@ -412,6 +412,11 @@
   ((c-mode c++-mode rust-mode rustic-mode go-mode python-mode ruby-mode) . lsp)
   (before-save . my/lsp-format))
 
+(use-package lsp-pyright
+  :hook (python-mode . (lambda ()
+                         (require 'lsp-pyright)
+                         (lsp))))
+
 ;; UI integrations for lsp-mode
 ;; https://emacs-lsp.github.io/lsp-ui/
 (use-package lsp-ui
@@ -484,6 +489,12 @@
   :ensure t
   :init (global-flycheck-mode))
 
+
+(use-package python-isort
+  :hook (python-mode . python-isort-on-save-mode))
+
+(use-package blacken
+  :hook (python-mode . blacken-mode))
 
 ;; A groovy major mode, grails minor mode, and a groovy inferior mode.
 ;; https://github.com/Groovy-Emacs-Modes/groovy-emacs-modes
