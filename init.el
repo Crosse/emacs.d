@@ -409,7 +409,7 @@
   :bind ("<f2>" . lsp-rename)
 
   :hook
-  ((c-mode c++-mode rust-mode rustic-mode go-mode python-mode ruby-mode) . lsp)
+  ((c-mode c++-mode rust-mode rustic-mode go-mode python-mode ruby-mode groovy-mode) . lsp)
   (before-save . my/lsp-format))
 
 (use-package lsp-pyright
