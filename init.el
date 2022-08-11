@@ -14,20 +14,31 @@
 (show-paren-mode t)             ;; Highlight matching braces.
 (size-indication-mode t)        ;; Show the size of the buffer in the modeline.
 (tool-bar-mode -1)              ;; Disable the tool bar in the GUI.
-(global-hl-line-mode t)         ;; Highlight the entire line ("cursorline" in Vim).
 (xterm-mouse-mode)              ;; Enable mouse mode in terminals that support it.
 (which-function-mode 1)         ;; Display the current function name in the mode line.
+
+;; Make ESC quit prompts
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 (setq
   vc-follow-symlinks t          ;; Always follow symlinks.
   scroll-margin 3               ;; Make sure there are at least 3 lines above or below the current line on-screen.
   scroll-conservatively 5       ;; Don't recenter point unless moving more than five lines outside of the frame.
-  inhibit-startup-screen t      ;; Don't show the welcome screen.
+  inhibit-startup-screen t      ;; Don't show the welcome screen
   make-backup-files nil         ;; stop creating backup~ files
   auto-save-default nil         ;; stop creating #autosave# files
   load-prefer-newer t           ;; Prefer newest version of a file.
   ;gc-cons-threshold 100000000
   garbage-collection-messages t)
+
+(setq-default truncate-lines t)
+
+;; Highlight the current line for many modes
+;; Use instead of global-hl-line-mode; see
+;; https://emacsredux.com/blog/2020/11/21/disable-global-hl-line-mode-for-specific-modes/
+(add-hook 'prog-mode-hook #'hl-line-mode)
+(add-hook 'text-mode-hook #'hl-line-mode)
+
 (fset 'yes-or-no-p 'y-or-n-p)   ;; Use 'y' instead of 'yes', etc.
 
 (when (version<= "26.0.50" emacs-version)
@@ -41,13 +52,62 @@
 ;; Automatically break long lines at the fill-column.
 (setq-default auto-fill-function 'do-auto-fill)
 
+(defun my/gui-setup (frame)
+  "Set up things in FRAME that only make sense for graphical displays."
+  (with-selected-frame frame
+    (when (display-graphic-p)
+      ;; (set-face-attribute 'default nil :font "SauceCodePro NF-12")
+      ;; (set-face-attribute 'default nil :font "BlexMono NF-12")
+      (set-face-attribute 'default nil :font "Iosevka NF-13")
 
-;; Smooth scrolling...sorta.
-(require 'pixel-scroll)
-(setq pixel-resolution-fine-flag t)
-(setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
-(setq mouse-wheel-progressive-speed nil)
-(pixel-scroll-mode t)
+      (add-hook 'prog-mode-hook #'prettify-symbols-mode)
+
+      ;; ligatures! ...but not right now
+      ;; (let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
+      ;;                 (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
+      ;;                 (36 . ".\\(?:>\\)")
+      ;;                 (37 . ".\\(?:\\(?:%%\\)\\|%\\)")
+      ;;                 (38 . ".\\(?:\\(?:&&\\)\\|&\\)")
+      ;;                 (42 . ".\\(?:\\(?:\\*\\*/\\)\\|\\(?:\\*[*/]\\)\\|[*/>]\\)")
+      ;;                 (43 . ".\\(?:\\(?:\\+\\+\\)\\|[+>]\\)")
+      ;;                 (45 . ".\\(?:\\(?:-[>-]\\|<<\\|>>\\)\\|[<>}~-]\\)")
+      ;;                 (46 . ".\\(?:\\(?:\\.[.<]\\)\\|[.=-]\\)")
+      ;;                 (47 . ".\\(?:\\(?:\\*\\*\\|//\\|==\\)\\|[*/=>]\\)")
+      ;;                 (48 . ".\\(?:x[a-zA-Z]\\)")
+      ;;                 (58 . ".\\(?:::\\|[:=]\\)")
+      ;;                 (59 . ".\\(?:;;\\|;\\)")
+      ;;                 (60 . ".\\(?:\\(?:!--\\)\\|\\(?:~~\\|->\\|\\$>\\|\\*>\\|\\+>\\|--\\|<[<=-]\\|=[<=>]\\||>\\)\\|[*$+~/<=>|-]\\)")
+      ;;                 (61 . ".\\(?:\\(?:/=\\|:=\\|<<\\|=[=>]\\|>>\\)\\|[<=>~]\\)")
+      ;;                 (62 . ".\\(?:\\(?:=>\\|>[=>-]\\)\\|[=>-]\\)")
+      ;;                 (63 . ".\\(?:\\(\\?\\?\\)\\|[:=?]\\)")
+      ;;                 (91 . ".\\(?:]\\)")
+      ;;                 (92 . ".\\(?:\\(?:\\\\\\\\\\)\\|\\\\\\)")
+      ;;                 (94 . ".\\(?:=\\)")
+      ;;                 (119 . ".\\(?:ww\\)")
+      ;;                 (123 . ".\\(?:-\\)")
+      ;;                 (124 . ".\\(?:\\(?:|[=|]\\)\\|[=>|]\\)")
+      ;;                 (126 . ".\\(?:~>\\|~~\\|[>=@~-]\\)")
+      ;;                 )
+      ;;         ))
+      ;;   (dolist (char-regexp alist)
+      ;;     (set-char-table-range composition-function-table (car char-regexp)
+      ;;       `([,(cdr char-regexp) 0 font-shape-gstring]))))
+
+      ;; Smooth scrolling...sorta.
+      (use-package pixel-scroll
+        :ensure nil
+        :config
+        (setq pixel-resolution-fine-flag t)
+        (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+        (setq mouse-wheel-progressive-speed nil)
+        (pixel-scroll-mode t)))))
+
+; This hook will not run for the initial frame created when starting Emacs.
+; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
+(add-hook 'after-make-frame-functions #'my/gui-setup)
+
+; ...so to get around that, just unconditionally call the function when this file is read.
+(my/gui-setup (car (visible-frame-list)))
 
 
 (eval-and-compile (require 'sh-script nil t))
@@ -61,6 +121,8 @@
   '((java-mode . "java")
      (awk-mode . "awk")
      (other . "bsd")))
+
+(setq-default ruby-indent-level 2)
 
 
 ;; Tell Emacs where "Custom" configuration can go, and then load it.
@@ -146,9 +208,10 @@
   (projectile-mode 1)
   (setq projectile-require-project-root t)
   (setq projectile-dynamic-mode-line nil)
-  (setq projectile-indexing-method 'native)
+  (setq projectile-indexing-method 'hybrid)
+  (setq projectile-sort-order 'recently-active)
   (setq projectile-globally-ignored-directories
-    (append projectile-globally-ignored-directories '("target" "build")))
+    (append projectile-globally-ignored-directories '("target" "build" ".elixir_ls")))
 
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
@@ -219,6 +282,29 @@
         t)
       nil)))
 
+(use-package term
+  :config
+  (setq explicit-shell-file-name "bash")
+  (setq term-prompt-regexp "^[^#$%>\\n]*[#$%>] *"))
+
+(use-package eterm-256color
+  :hook (term-mode . eterm-256color-mode))
+
+(use-package vterm
+  :commands vterm
+  :config
+  ;; (setq term-prompt-regexp "^[^#$%>\\n]*[#$%>] *")
+  (push (list "find-file-below"
+          (lambda (path)
+            (if-let* ((buf (find-file-noselect path))
+                       (window (display-buffer-below-selected buf nil)))
+              (select-window window)
+              (message "Failed to open file: %s" path))))
+    vterm-eval-cmds)
+  (setq vterm-max-scrollback 10000))
+
+
+
 ;; undo-tree, required for evil `C-r` redo functionality
 ;; https://www.emacswiki.org/emacs/UndoTree
 (use-package undo-tree
@@ -246,7 +332,11 @@
     company-idle-delay 0.1
     company-minimum-prefix-length 1
     company-tooltip-align-annotations t)
-
+  :bind (
+          :map company-active-map
+          ("<return>" . nil)
+          ("RET" . nil)
+          ("C-<return>" . company-complete-selection))
   :hook (after-init . global-company-mode))
 
 
@@ -365,6 +455,7 @@
 ;;
 ;; https://github.com/brotzeit/rustic
 (use-package rustic
+  :requires flycheck
   :custom
   (rustic-format-on-save nil)
   (rustic-lsp-format t)
@@ -374,14 +465,15 @@
 ;; Better Rust/Cargo support for Flycheck
 ;; https://github.com/flycheck/flycheck-rust
 (use-package flycheck-rust
-  :after rust-mode
+  :after (rust-mode rustic-mode)
   :hook (flycheck-mode . flycheck-rust-setup))
 
 
 (defun my/lsp-format ()
   "Enable LSP formatting for Rust."
   (when (member major-mode '(rust-mode rustic-mode))
-    (lsp-format-buffer)))
+    (if (fboundp 'lsp-format-buffer)
+      (lsp-format-buffer))))
 
 ; Client/library for the Language Server Protocol
 ;; https://emacs-lsp.github.io/lsp-mode/
@@ -409,13 +501,8 @@
   :bind ("<f2>" . lsp-rename)
 
   :hook
-  ((c-mode c++-mode rust-mode rustic-mode go-mode python-mode ruby-mode groovy-mode) . lsp)
+  ((c-mode c++-mode go-mode groovy-mode python-mode rjsx-mode ruby-mode rust-mode rustic-mode web-mode) . lsp)
   (before-save . my/lsp-format))
-
-(use-package lsp-pyright
-  :hook (python-mode . (lambda ()
-                         (require 'lsp-pyright)
-                         (lsp))))
 
 ;; UI integrations for lsp-mode
 ;; https://emacs-lsp.github.io/lsp-ui/
@@ -436,7 +523,8 @@
 ;; Java LSP integration
 ;; https://emacs-lsp.github.io/lsp-java/
 (use-package lsp-java
-  :config (add-hook 'java-mode-hook #'lsp))
+  :requires lsp
+  :hook java . 'lsp)
 
 
 ;; A tree layout file explorer for Emacs
@@ -489,6 +577,15 @@
   :ensure t
   :init (global-flycheck-mode))
 
+(use-package flycheck-golangci-lint
+  :ensure t
+  :config
+  (add-to-list 'flycheck-checkers 'golangci-lint))
+
+;; (use-package lsp-pyright
+;;   :hook (python-mode . (lambda ()
+;;                          (require 'lsp-pyright)
+;;                          (lsp))))
 
 (use-package python-isort
   :hook (python-mode . python-isort-on-save-mode))
@@ -496,8 +593,8 @@
 (use-package blacken
   :hook (python-mode . blacken-mode))
 
-(use-package pyvenv
-  :config (pyvenv-mode 1))
+(use-package poetry
+  :hook (python-mode . poetry-tracking-mode))
 
 ;; A groovy major mode, grails minor mode, and a groovy inferior mode.
 ;; https://github.com/Groovy-Emacs-Modes/groovy-emacs-modes
@@ -513,7 +610,9 @@
 ;; https://github.com/dominikh/go-mode.el
 (use-package go-mode
   :mode ("\\.go\\'")
-  :config (setq gofmt-command "goimports")
+  :config
+  (setq gofmt-command "golines")
+  (setq gofmt-args '("--tab-len=8" "--reformat-tags" "--max-len=9999"))
   :hook (before-save . gofmt-before-save))
 
 
@@ -640,13 +739,18 @@
 (use-package yaml-mode)
 
 
-(require 'hl-line)
-(set-face-background hl-line-face "#262626")
+;; Themes
+; decent built-in theme
+;(load-theme 'tsdh-light t)
+
+(use-package color-theme-sanityinc-tomorrow)
+;(load-theme 'sanityinc-tomorrow-day t)
+
+(use-package color-theme-sanityinc-solarized)
+(load-theme 'sanityinc-solarized-light t)
 
 
-(use-package monokai-theme)
-(load-theme 'monokai t)
-
+;;(use-package command-log-mode)
 
 ;; Put icons in various places to spruce this place up a bit.
 ;; https://github.com/domtronn/all-the-icons.el
@@ -659,6 +763,7 @@
   :custom
   (doom-modeline-buffer-file-name-style 'relative-from-project)
   (doom-modeline-indent-info t)
+  (doom-modeline-minor-modes t)
   :hook (after-init . doom-modeline-mode))
 
 (defun enable-doom-icons ()
@@ -701,6 +806,56 @@
   ("C-h k" . helpful-key)
   ("C-c C-d" . helpful-at-point))
 
+;; Wakatime - automatic time tracking and metrics generated from your
+;; programming activity
+(use-package wakatime-mode
+  :config (setq wakatime-cli-path (expand-file-name "~/.wakatime/wakatime-cli"))
+  :hook(after-init . global-wakatime-mode))
+
+
+;; Org mode
+(use-package toc-org
+  :hook (org-mode . toc-org-mode))
+
+(defun my/org-mode-setup ()
+  "Set up Org mode."
+  (if (fboundp 'org-indent-mode)
+    (org-indent-mode))
+  (variable-pitch-mode 1))
+;;(visual-line-mode 1)
+
+
+(use-package org
+  :hook (org-mode . my/org-mode-setup)
+  :config
+  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-table nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-formula nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-code nil :inherit '(shadow fixed-pitch))
+  ;(set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
+  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
+
+
+(defun my/web-mode-hook ()
+  "Hooks for web mode."
+  (eval-and-compile (require 'web-mode))
+  (setq web-mode-enable-engine-detection t)
+  (setq web-mode-markup-indent-offset 4))
+
+(use-package web-mode
+  :mode
+  ("\\.htm[l]?\\'" . web-mode)
+  ("\\.css\\'" . web-mode)
+  ("\\.ts[x]?\\'" . web-mode)
+  :hook
+  (web-mode . my/web-mode-hook))
+
+(use-package rjsx-mode
+  :mode ("\\.js[x]?\\'" . rjsx-mode)
+  :custom
+  (js2-strict-missing-semi-warning nil))
 
 (defvar electrify-return-match
   "[\]}\)\"]"
@@ -730,17 +885,17 @@
 
 
 (defun my/compile-after-save ()
-  "Byte-Compiles the Emacs Lisp file in the current buffer, iff a compiled version already exists."
+  "Byte-Compiles the Emacs Lisp file in the current buffer.
+Only happens if a compiled version already exists."
   (add-hook 'after-save-hook
     (lambda ()
       (if (file-exists-p (concat buffer-file-name "c"))
         (emacs-lisp-byte-compile)))
 
-  nil
-  t))
+    nil
+    t))
 
 (add-hook 'emacs-lisp-mode-hook 'my/compile-after-save)
-
 
 (provide 'init)
 ;;; init.el ends here
