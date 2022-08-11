@@ -13,7 +13,8 @@
 (save-place-mode t)             ;; Save our place in each file.
 (show-paren-mode t)             ;; Highlight matching braces.
 (size-indication-mode t)        ;; Show the size of the buffer in the modeline.
-(tool-bar-mode -1)              ;; Disable the tool bar in the GUI.
+(when (fboundp 'tool-bar-mode)
+  (tool-bar-mode -1))           ;; Disable the tool bar in the GUI.
 (xterm-mouse-mode)              ;; Enable mouse mode in terminals that support it.
 (which-function-mode 1)         ;; Display the current function name in the mode line.
 
