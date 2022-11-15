@@ -58,8 +58,8 @@
   (with-selected-frame frame
     (when (display-graphic-p)
       ;; (set-face-attribute 'default nil :font "SauceCodePro NF-12")
-      ;; (set-face-attribute 'default nil :font "BlexMono NF-12")
-      (set-face-attribute 'default nil :font "Iosevka NF-13")
+      (set-face-attribute 'default nil :font "BlexMono NF-13")
+      ;; (set-face-attribute 'default nil :font "Iosevka NF-13")
 
       (add-hook 'prog-mode-hook #'prettify-symbols-mode)
 
@@ -521,6 +521,14 @@
 
   :hook (lsp-mode . lsp-ui-mode))
 
+;; Stops the incessant beeping that is caused by mousing over parts of the window in lsp-enabled buffers
+(let ((areas '("nil" "mode-line" "left-margin" "left-fringe" "right-fringe" "header-line" "vertical-scroll-bar" "tab-line"))
+       loc)
+  (while areas
+    (setq loc (pop areas))
+    (global-set-key
+      (kbd (concat "<" loc "> <mouse-movement>")) #'ignore)))
+
 ;; Java LSP integration
 ;; https://emacs-lsp.github.io/lsp-java/
 (use-package lsp-java
@@ -778,6 +786,37 @@
 
 (add-hook 'after-make-frame-functions #'setup-frame-doom)
 
+
+(require 'tab-line)
+(defun sorted-buffers-list ()
+  "Return buffer list sorted by name."
+  (sort (tab-line-tabs-buffer-list)
+	#'(lambda (first second)
+	   (string<
+	    (buffer-name first)
+	    (buffer-name second)))))
+
+(defun my/tab-line-tabs-function ()
+  "My tabs line function."
+    (seq-filter
+     (apply-partially
+      (lambda (buffer)
+	(let ((bufname (buffer-name buffer)))
+	  (cond
+	   ((string-equal bufname (buffer-name (current-buffer))) buffer)
+	   ((string-prefix-p "*vterm" bufname) buffer)
+	   ((string-equal "*scratch*" bufname) buffer)
+	   ((not (or
+	      (string-search ":" bufname)
+	      (string-prefix-p "*" bufname))) buffer)))))
+     (sorted-buffers-list)))
+
+(use-package tab-line
+  :config (setq tab-line-tabs-function 'my/tab-line-tabs-function)
+  :custom (global-tab-line-mode)
+  :bind
+  ("s-}" . tab-line-switch-to-next-tab)
+  ("s-{" . tab-line-switch-to-prev-tab))
 
 ;; A Common Lisp REPL
 ;; https://github.com/joaotavora/sly
