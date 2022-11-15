@@ -190,10 +190,12 @@
 (eval-and-compile (require 'exec-path-from-shell nil t))
 (use-package exec-path-from-shell
   :if (memq system-type '(usg-unix-v darwin gnu/linux))
-  :init
-  (setq exec-path-from-shell-arguments '("-l"))
+  ;; :init
+  ;; (setq exec-path-from-shell-arguments '("-l"))
 
   :config
+  (dolist (var '("SSH_AUTH_SOCK" "LANG" "LC_CTYPE"))
+    (add-to-list 'exec-path-from-shell-variables var))
   (exec-path-from-shell-initialize))
 
 (use-package shfmt
@@ -302,8 +304,8 @@
               (select-window window)
               (message "Failed to open file: %s" path))))
     vterm-eval-cmds)
-  (setq vterm-max-scrollback 10000))
-
+  (setq vterm-max-scrollback 10000)
+  :bind ("C-`" . projectile-run-vterm))
 
 
 ;; undo-tree, required for evil `C-r` redo functionality
