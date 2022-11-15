@@ -339,7 +339,7 @@
           :map company-active-map
           ("<return>" . nil)
           ("RET" . nil)
-          ("C-<return>" . company-complete-selection))
+          ("<tab>" . company-complete-selection))
   :hook (after-init . global-company-mode))
 
 
@@ -491,20 +491,28 @@
 (use-package lsp-mode
   :custom
   (lsp-auto-guess-root t)
-  ;(lsp-enable-snippet nil)
-  ;(lsp-idle-delay 1.0)
   (lsp-keep-workspace-alive nil)
+  (lsp-response-timeout 2)
+  (lsp-signature-render-documentation nil)
+
   (read-process-output-max (* 2 1024 1024))
 
   (lsp-pyls-configuration-sources ["flake8" "pycodestyle"])
+
   (lsp-rust-server 'rust-analyzer)
   (lsp-rust-analyzer-cargo-watch-command "clippy")
   (lsp-rust-analyzer-diagnostics-enable-experimental nil)
 
-  :bind ("<f2>" . lsp-rename)
+  :bind
+  ("<f2>" . lsp-rename)
+  ("<f12>" . lsp-ui-peek-find-definitions)
+  ("M-<f12>" . lsp-ui-peek-find-references)
+  ("s-<f12>" . lsp-find-definition)
 
   :hook
-  ((c-mode c++-mode go-mode groovy-mode python-mode rjsx-mode ruby-mode rust-mode rustic-mode web-mode) . lsp)
+  ((c-mode c++-mode clojure-mode clojurec-mode clojurescript-mode
+     go-mode groovy-mode python-mode rjsx-mode ruby-mode
+     rust-mode rustic-mode web-mode) . lsp)
   (before-save . my/lsp-format))
 
 ;; UI integrations for lsp-mode
@@ -512,14 +520,16 @@
 (use-package lsp-ui
   :custom
   (lsp-ui-doc-enable nil)
-  (lsp-headerline-breadcrumb-icons-enable nil)
+
   (lsp-ui-peek-always-show t)
+
   (lsp-ui-sideline-delay 0.75)
   (lsp-ui-sideline-ignore-duplicate t)
   (lsp-ui-sideline-show-code-actions nil)
   (lsp-ui-sideline-show-hover nil)
-  (lsp-ui-sideline-show-hover t)
   (lsp-ui-sideline-show-symbol nil)
+
+  :bind ("<f9>" . lsp-ui-doc-toggle)
 
   :hook (lsp-mode . lsp-ui-mode))
 
@@ -544,9 +554,9 @@
   :defer t
   :custom
   (treemacs-project-follow-cleanup t)
-  :bind
-  (:map global-map
-    ("<f9>" . treemacs-select-window)))
+  (treemacs-project-follow-mode t)
+  :config
+  (treemacs-resize-icons 16))
 
 ;; Evil mode integration for treemacs
 ;; https://github.com/Alexander-Miller/treemacs/blob/master/src/extra/treemacs-evil.el
@@ -623,7 +633,8 @@
   :mode ("\\.go\\'")
   :config
   (setq gofmt-command "golines")
-  (setq gofmt-args '("--tab-len=8" "--reformat-tags" "--max-len=9999"))
+  ;; (setq gofmt-args '("--tab-len=8" "--reformat-tags" "--max-len=9999"))
+  (setq gofmt-args '("--tab-len=8" "--max-len=9999"))
   :hook (before-save . gofmt-before-save))
 
 
