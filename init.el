@@ -287,18 +287,6 @@
   (evil-goggles-use-diff-faces))
 
 
-(defun my/package-file-p (&optional filename _noerror)
-  "Return t if FILENAME resides under ~/.emacs.d/elpa."
-  (interactive "GEnter filename: ")
-  (let* ((elpa (expand-file-name "~/.emacs.d/elpa/"))
-         (fname (if filename filename buffer-file-name))
-         (expanded (expand-file-name fname)))
-    (if (string-prefix-p elpa expanded)
-      (progn
-        (message "file under %s" elpa)
-        t)
-      nil)))
-
 (use-package term
   :config
   (setq explicit-shell-file-name "bash")
@@ -321,6 +309,18 @@
   (setq vterm-max-scrollback 10000)
   :bind ("C-`" . projectile-run-vterm))
 
+
+(defun my/package-file-p (&optional filename _noerror)
+  "Return t if FILENAME resides under ~/.emacs.d/elpa."
+  (interactive "GEnter filename: ")
+  (let* ((elpa (expand-file-name "~/.emacs.d/elpa/"))
+         (fname (if filename filename buffer-file-name))
+         (expanded (expand-file-name fname)))
+    (if (string-prefix-p elpa expanded)
+      (progn
+        (message "file under %s" elpa)
+        t)
+      nil)))
 
 ;; undo-tree, required for evil `C-r` redo functionality
 ;; https://www.emacswiki.org/emacs/UndoTree
