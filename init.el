@@ -18,9 +18,13 @@
 ;; ...but set it much lower afterwards so that GC pauses aren't as significant.
 (add-hook 'after-init-hook (lambda () (setq gc-cons-threshold (* 2 1000 1000))))
 
-
+;; do this before changing user-emacs-directory
 (add-to-list 'load-path (expand-file-name "site-lisp" user-emacs-directory))
 
+;; Change the user-emacs-directory to keep unwanted things out of ~/.emacs.d
+;; https://github.com/daviwil/dotfiles/blob/fb83c040258391bbb0cb467278bc709cf995d0ac/.emacs.d/modules/dw-core.el#L25-L27
+(setq user-emacs-directory (expand-file-name "~/.cache/emacs/")
+      url-history-file (expand-file-name "url/history" user-emacs-directory))
 
 ;; Variables and Options
 
@@ -158,9 +162,13 @@
 (setq-default ruby-indent-level 2)
 
 
-;; Tell Emacs where "Custom" configuration can go, and then load it.
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(load custom-file)
+;; Keep customization settings in a temporary file (thanks Ambrevar!)
+;; https://github.com/daviwil/dotfiles/blob/fb83c040258391bbb0cb467278bc709cf995d0ac/.emacs.d/modules/dw-core.el#L33-L38
+(setq custom-file
+  (if (boundp 'server-socket-dir)
+    (expand-file-name "custom.el" server-socket-dir)
+    (expand-file-name (format "emacs-custom-%s.el" (user-uid)) temporary-file-directory)))
+(load custom-file t)
 
 
 ;; Always start the server so that emacsclient can connect.
