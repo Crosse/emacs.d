@@ -236,7 +236,7 @@
   (setq projectile-indexing-method 'hybrid)
   (setq projectile-sort-order 'recently-active)
   (setq projectile-globally-ignored-directories
-    (append projectile-globally-ignored-directories '("target" "build" ".elixir_ls")))
+    (append projectile-globally-ignored-directories '("target" "build" ".elixir_ls" "vendor")))
 
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
