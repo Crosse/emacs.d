@@ -34,6 +34,17 @@
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
+;; Quicker way to kill a buffer instead of "C-x k <enter>"
+(defun my/quick-kill-buffer ()
+ "Kill the current buffer."
+ (interactive)
+ (kill-buffer (current-buffer)))
+
+(global-set-key (kbd "C-c C-k") #'my/quick-kill-buffer)
+
+(global-unset-key (kbd "C-<return>"))
+(global-set-key (kbd "C-<return>") 'evil-open-above)
+
 (setq
   vc-follow-symlinks t          ;; Always follow symlinks.
   scroll-margin 3               ;; Make sure there are at least 3 lines above or below the current line on-screen.
