@@ -516,6 +516,13 @@
   :requires embark
   :hook (embark-collect-mode . consult-preview-at-point-mode))
 
+
+;; Displays available keybindings in popup
+;; https://github.com/justbur/emacs-which-key
+(use-package which-key
+  :config
+  (which-key-mode 1))
+
 ;; Package for highlighting uncommitted changes
 ;; https://github.com/dgutov/diff-hl
 (use-package diff-hl
