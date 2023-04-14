@@ -579,7 +579,7 @@
 (defun my/rust-src-path ()
   "Find Rust's source path."
   (or
-    ;(getenv "RUST_SRC_PATH")
+    (getenv "RUST_SRC_PATH")
     (when (executable-find "rustc")
       (let* ((sysroot (s-trim-right
                         (shell-command-to-string
