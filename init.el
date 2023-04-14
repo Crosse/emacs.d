@@ -867,8 +867,17 @@
 (use-package paredit
   :hook ((clojure-mode lisp-mode emacs-lisp-mode) . paredit-mode))
 
-(use-package evil-paredit
-  :hook ((clojure-mode lisp-mode emacs-lisp-mode) . evil-paredit-mode))
+
+;; https://github.com/Fuco1/smartparens
+(use-package smartparens)
+
+
+;; https://github.com/emacs-evil/evil-cleverparens
+(use-package evil-cleverparens
+ :requires (smartparens paredit)
+ :config (setq evil-cleverparens-complete-parens-in-yanked-region t)
+ :hook (paredit-mode . evil-cleverparens-mode))
+
 
 ;; Highlights delimiters such as parentheses, brackets or braces according to their depth.
 ;; https://github.com/Fanael/rainbow-delimiters/
