@@ -4,7 +4,7 @@
 
 ;;; Code:
 
-(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+(add-to-list 'load-path (expand-file-name "site-lisp" user-emacs-directory))
 
 
 ;; Variables and Options
@@ -138,7 +138,7 @@
 
 
 ;; For packages that aren't in [M]ELPA, copy or git clone them into ~/.emacs.d/lisp.
-(let ((default-directory "~/.emacs.d/lisp"))
+(let ((default-directory "~/.emacs.d/site-lisp"))
   (normal-top-level-add-to-load-path '("."))
   (normal-top-level-add-subdirs-to-load-path))
 
