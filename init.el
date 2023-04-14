@@ -91,7 +91,7 @@
       (set-face-attribute 'default nil :font "BlexMono NF-13")
       ;; (set-face-attribute 'default nil :font "Iosevka NF-13")
 
-      (add-hook 'prog-mode-hook #'prettify-symbols-mode)
+      ;; (add-hook 'prog-mode-hook #'prettify-symbols-mode)
 
       ;; ligatures! ...but not right now
       ;; (let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
