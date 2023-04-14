@@ -672,7 +672,8 @@
  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]vendor\\'"))
 
 ;; Stops the incessant beeping that is caused by mousing over parts of the window in lsp-enabled buffers
-(let ((areas '("nil" "mode-line" "left-margin" "left-fringe" "right-fringe" "header-line" "vertical-scroll-bar" "tab-line"))
+(let ((areas '("nil" "mode-line" "left-margin" "left-fringe" "right-fringe" "header-line"
+                "vertical-scroll-bar" "tab-line" "menu-bar"))
        loc)
   (while areas
     (setq loc (pop areas))
