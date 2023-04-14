@@ -915,6 +915,18 @@
 ;; https://github.com/magit/magit
 (use-package magit)
 
+;; Perspective
+(use-package
+  perspective
+  ;; :bind
+  ;; (("C-x C-b" . persp-list-buffers)
+  ;;  ("C-x b" . persp-switch-to-buffer*)
+  ;;  ("C-x k" . persp-kill-buffer*))
+  :config (setq persp-state-default-file (expand-file-name "perspective.state" user-emacs-directory))
+  :custom (persp-mode-prefix-key (kbd "C-c C-p"))
+  :hook (kill-emacs . persp-state-save)
+  :init (persp-mode))
+
 
 ;; Themes
 ; decent built-in theme
