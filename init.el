@@ -8,10 +8,10 @@
 
 ;; taken from daviwil's Emacs config
 (add-hook 'emacs-startup-hook
- (lambda ()
-  (message "*** Emacs loaded in %s seconds with %d garbage collections."
-   (emacs-init-time "%.2f")
-   gcs-done)))
+  (lambda ()
+    (message "*** Emacs loaded in %s seconds with %d garbage collections."
+      (emacs-init-time "%.2f")
+      gcs-done)))
 
 ;; set a higher GC during startup
 (setq gc-cons-threshold (* 50 1000 1000))
@@ -24,7 +24,7 @@
 ;; Change the user-emacs-directory to keep unwanted things out of ~/.emacs.d
 ;; https://github.com/daviwil/dotfiles/blob/fb83c040258391bbb0cb467278bc709cf995d0ac/.emacs.d/modules/dw-core.el#L25-L27
 (setq user-emacs-directory (expand-file-name "~/.cache/emacs/")
-      url-history-file (expand-file-name "url/history" user-emacs-directory))
+  url-history-file (expand-file-name "url/history" user-emacs-directory))
 
 ;; Variables and Options
 
@@ -42,9 +42,9 @@
 
 ;; Quicker way to kill a buffer instead of "C-x k <enter>"
 (defun my/quick-kill-buffer ()
- "Kill the current buffer."
- (interactive)
- (kill-buffer (current-buffer)))
+  "Kill the current buffer."
+  (interactive)
+  (kill-buffer (current-buffer)))
 
 (global-set-key (kbd "C-c C-k") #'my/quick-kill-buffer)
 
@@ -73,14 +73,14 @@
 
 (fset 'yes-or-no-p 'y-or-n-p)   ;; Use 'y' instead of 'yes', etc.
 
- ;; Display line numbers and highlight the current line for many modes
- ;; Use `hl-line-mode` instead of `global-hl-line-mode`; see
- ;; https://emacsredux.com/blog/2020/11/21/disable-global-hl-line-mode-for-specific-modes/
+;; Display line numbers and highlight the current line for many modes
+;; Use `hl-line-mode` instead of `global-hl-line-mode`; see
+;; https://emacsredux.com/blog/2020/11/21/disable-global-hl-line-mode-for-specific-modes/
 (dolist (mode '(text-mode-hook
-                prog-mode-hook
-                conf-mode-hook))
- (add-hook mode (lambda () (display-line-numbers-mode 1)))
- (add-hook mode #'hl-line-mode))
+                 prog-mode-hook
+                 conf-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 1)))
+  (add-hook mode #'hl-line-mode))
 
 
 ;; NOTE: (almost) every invocation of eval-{when,and}-compile in this file is for no other reason
@@ -139,11 +139,11 @@
         (setq mouse-wheel-progressive-speed nil)
         (pixel-scroll-mode t)))))
 
-; This hook will not run for the initial frame created when starting Emacs.
-; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
+;; This hook will not run for the initial frame created when starting Emacs.
+;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
 (add-hook 'after-make-frame-functions #'my/gui-setup)
 
-; ...so to get around that, just unconditionally call the function when this file is read.
+;; ...so to get around that, just unconditionally call the function when this file is read.
 (my/gui-setup (car (visible-frame-list)))
 
 
@@ -331,8 +331,8 @@
   "Return t if FILENAME resides under ~/.emacs.d/elpa."
   (interactive "GEnter filename: ")
   (let* ((elpa (expand-file-name "~/.emacs.d/elpa/"))
-         (fname (if filename filename buffer-file-name))
-         (expanded (expand-file-name fname)))
+          (fname (if filename filename buffer-file-name))
+          (expanded (expand-file-name fname)))
     (if (string-prefix-p elpa expanded)
       (progn
         (message "file under %s" elpa)
@@ -522,9 +522,9 @@
   :config
   ;; Hide the mode line of the Embark live/completions buffers
   (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
+    '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+       nil
+       (window-parameters (mode-line-format . none)))))
 
 
 ;; Embark-Consult integration
@@ -630,7 +630,7 @@
     (if (fboundp 'lsp-format-buffer)
       (lsp-format-buffer))))
 
-; Client/library for the Language Server Protocol
+;; Client/library for the Language Server Protocol
 ;; https://emacs-lsp.github.io/lsp-mode/
 ;;
 ;; Required things
@@ -686,7 +686,7 @@
   :hook (lsp-mode . lsp-ui-mode))
 
 (with-eval-after-load 'lsp-mode
- (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]vendor\\'"))
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]vendor\\'"))
 
 ;; Stops the incessant beeping that is caused by mousing over parts of the window in lsp-enabled buffers
 (let ((areas '("nil" "mode-line" "left-margin" "left-fringe" "right-fringe" "header-line"
@@ -882,9 +882,9 @@
 
 ;; https://github.com/emacs-evil/evil-cleverparens
 (use-package evil-cleverparens
- :requires (smartparens paredit)
- :config (setq evil-cleverparens-complete-parens-in-yanked-region t)
- :hook (paredit-mode . evil-cleverparens-mode))
+  :requires (smartparens paredit)
+  :config (setq evil-cleverparens-complete-parens-in-yanked-region t)
+  :hook (paredit-mode . evil-cleverparens-mode))
 
 
 ;; Highlights delimiters such as parentheses, brackets or braces according to their depth.
@@ -954,11 +954,11 @@
 
 ;; Themes
 
-; decent built-in theme
-;(load-theme 'tsdh-light t)
+;; decent built-in theme
+;; (load-theme 'tsdh-light t)
 
 (use-package color-theme-sanityinc-tomorrow)
-;(load-theme 'sanityinc-tomorrow-day t)
+;; (load-theme 'sanityinc-tomorrow-day t)
 
 (use-package color-theme-sanityinc-solarized)
 (load-theme 'sanityinc-solarized-light t)
@@ -972,8 +972,8 @@
 
 ;; https://github.com/jtbm37/all-the-icons-dired
 (use-package all-the-icons-dired
- :requires all-the-icons
- :hook (dired-mode . all-the-icons-dired-mode))
+  :requires all-the-icons
+  :hook (dired-mode . all-the-icons-dired-mode))
 
 ;; doom-modeline is a modeline taken from the Doom Emacs project.
 ;; https://github.com/seagle0128/doom-modeline
@@ -1001,25 +1001,25 @@
 (defun sorted-buffers-list ()
   "Return buffer list sorted by name."
   (sort (tab-line-tabs-buffer-list)
-	#'(lambda (first second)
-	   (string<
-	    (buffer-name first)
-	    (buffer-name second)))))
+    #'(lambda (first second)
+        (string<
+          (buffer-name first)
+          (buffer-name second)))))
 
 (defun my/tab-line-tabs-function ()
   "My tabs line function."
-    (seq-filter
-     (apply-partially
+  (seq-filter
+    (apply-partially
       (lambda (buffer)
-	(let ((bufname (buffer-name buffer)))
-	  (cond
-	   ((string-equal bufname (buffer-name (current-buffer))) buffer)
-	   ((string-prefix-p "*vterm" bufname) buffer)
-	   ((string-equal "*scratch*" bufname) buffer)
-	   ((not (or
-	      (string-search ":" bufname)
-	      (string-prefix-p "*" bufname))) buffer)))))
-     (sorted-buffers-list)))
+        (let ((bufname (buffer-name buffer)))
+          (cond
+            ((string-equal bufname (buffer-name (current-buffer))) buffer)
+            ((string-prefix-p "*vterm" bufname) buffer)
+            ((string-equal "*scratch*" bufname) buffer)
+            ((not (or
+                    (string-search ":" bufname)
+                    (string-prefix-p "*" bufname))) buffer)))))
+    (sorted-buffers-list)))
 
 (use-package tab-line
   :config (setq tab-line-tabs-function 'my/tab-line-tabs-function)
@@ -1092,7 +1092,7 @@
   (set-face-attribute 'org-table nil :inherit 'fixed-pitch)
   (set-face-attribute 'org-formula nil :inherit 'fixed-pitch)
   (set-face-attribute 'org-code nil :inherit '(shadow fixed-pitch))
-  ;(set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
+  ;; (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
   (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
   (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
