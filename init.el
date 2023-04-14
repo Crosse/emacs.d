@@ -177,14 +177,6 @@
   :pin melpa)
 
 
-;; GCMH - the Garbage Collector Magic Hack
-;; https://github.com/emacsmirror/gcmh
-(use-package gcmh
-  :config
-  (setq gcmh-high-cons-threshold 262144000) ; 250MiB
-  (gcmh-mode 1))
-
-
 ;; Make Emacs use the $PATH set up by the user's shell
 ;; https://github.com/purcell/exec-path-from-shell
 (eval-and-compile (require 'exec-path-from-shell nil t))
