@@ -1008,8 +1008,17 @@
 (use-package sly
   :config
   (setq sly-lisp-implementations
-    `((sbcl ("/usr/local/bin/sbcl" "--noinform" "--no-linedit") :coding-system utf-8-unix)
-       (ccl ,(expand-file-name "~/bin/ccl")))))
+    `((roswell ("ros" "-Q" "run"))
+       (sbcl ("/usr/local/bin/sbcl" "--noinform" "--no-linedit") :coding-system utf-8-unix)
+       (ccl ,(expand-file-name "~/bin/ccl"))))
+  (setq sly-default-lisp 'roswell))
+
+(defvar *roswell-init-file* (expand-file-name "~/.roswell/helper.el"))
+(if (file-exists-p *roswell-init-file*)
+  (progn
+    (load *roswell-init-file*)
+    (setq inferior-lisp-program "ros -Q run"))
+  (message "Roswell helper not found; is it installed?"))
 
 
 ;; Quicklisp support for SLY
