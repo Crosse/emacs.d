@@ -255,9 +255,11 @@
 ;; The extensible vi layer for Emacs.
 ;; https://github.com/emacs-evil/evil
 (use-package evil
+  ;; TODO: unbind <TAB> from evil-jump-forward
   :init
   ;; Set up for evil-collection.
   (setq evil-want-integration t
+    evil-move-beyond-eol t
     evil-want-keybinding nil
     evil-undo-system 'undo-tree
     ;; Take C-u back for scrolling a half-page up.
