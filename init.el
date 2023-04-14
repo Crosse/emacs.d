@@ -256,6 +256,8 @@
     ;; Take C-u back for scrolling a half-page up.
     evil-want-C-u-scroll t)
   (setq-default evil-symbol-word-search t)
+  (setq evil-default-cursor 'box)
+  (setq evil-insert-state-cursor 'bar)
 
   :config
   (add-hook 'after-init-hook 'evil-normalize-keymaps)
@@ -267,15 +269,6 @@
   ;; (evil-set-initial-state 'xref--xref-buffer-mode 'emacs)
 
   (evil-mode 1))
-
-(defun my/cursor-state-change ()
-  "Change the cursor to a bar in insert mode, and a box otherwise."
-  (if (string= evil-state "insert")
-    (setq cursor-type 'bar)
-    (setq cursor-type 'box)))
-
-(add-hook 'evil-insert-state-entry-hook #'my/cursor-state-change)
-(add-hook 'evil-insert-state-exit-hook #'my/cursor-state-change)
 
 
 ;; A set of keybindings for evil-mode
