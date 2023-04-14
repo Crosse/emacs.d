@@ -4,6 +4,19 @@
 
 ;;; Code:
 
+;; taken from daviwil's Emacs config
+(add-hook 'emacs-startup-hook
+ (lambda ()
+  (message "*** Emacs loaded in %s seconds with %d garbage collections."
+   (emacs-init-time "%.2f")
+   gcs-done)))
+
+;; set a higher GC during startup
+(setq gc-cons-threshold (* 50 1000 1000))
+;; ...but set it much lower afterwards so that GC pauses aren't as significant.
+(add-hook 'after-init-hook (lambda () (setq gc-cons-threshold (* 2 1000 1000))))
+
+
 (add-to-list 'load-path (expand-file-name "site-lisp" user-emacs-directory))
 
 
