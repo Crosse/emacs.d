@@ -583,8 +583,7 @@
                           ((file-exists-p library-path) library-path)
                           ((file-exists-p lib-path) lib-path))))
         (when (file-exists-p src-path)
-          src-path)
-        src-path))
+          src-path)))
     "/usr/local/src/rust/src"))
 
 ;; Rust support
