@@ -757,11 +757,14 @@
 (use-package python-isort
   :hook (python-mode . python-isort-on-save-mode))
 
+
 (use-package blacken
   :hook (python-mode . blacken-mode))
 
+
 (use-package poetry
   :hook (python-mode . poetry-tracking-mode))
+
 
 ;; A groovy major mode, grails minor mode, and a groovy inferior mode.
 ;; https://github.com/Groovy-Emacs-Modes/groovy-emacs-modes
@@ -931,6 +934,7 @@
 
 
 ;; Themes
+
 ; decent built-in theme
 ;(load-theme 'tsdh-light t)
 
@@ -1041,6 +1045,7 @@
   ("C-h v" . helpful-variable)
   ("C-h k" . helpful-key)
   ("C-c C-d" . helpful-at-point))
+
 
 ;; Wakatime - automatic time tracking and metrics generated from your
 ;; programming activity
