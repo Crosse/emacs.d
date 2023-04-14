@@ -46,29 +46,35 @@
 (global-set-key (kbd "C-<return>") 'evil-open-above)
 
 (setq
-  vc-follow-symlinks t          ;; Always follow symlinks.
-  scroll-margin 3               ;; Make sure there are at least 3 lines above or below the current line on-screen.
-  scroll-conservatively 5       ;; Don't recenter point unless moving more than five lines outside of the frame.
-  inhibit-startup-screen t      ;; Don't show the welcome screen
-  make-backup-files nil         ;; stop creating backup~ files
-  auto-save-default nil         ;; stop creating #autosave# files
-  load-prefer-newer t           ;; Prefer newest version of a file.
-  ;gc-cons-threshold 100000000
+  vc-follow-symlinks t     ;; Always follow symlinks.
+  scroll-margin 3          ;; Make sure there are at least 3 lines above or below the current line on-screen.
+  scroll-conservatively 5  ;; Don't recenter point unless moving more than five lines outside of the frame.
+  inhibit-startup-screen t ;; Don't show the welcome screen
+  make-backup-files nil    ;; stop creating backup~ files
+  auto-save-default nil    ;; stop creating #autosave# files
+  load-prefer-newer t      ;; Prefer newest version of a file.
   garbage-collection-messages t)
-
+                                        ;
 (setq-default truncate-lines t)
 
-;; Highlight the current line for many modes
-;; Use instead of global-hl-line-mode; see
-;; https://emacsredux.com/blog/2020/11/21/disable-global-hl-line-mode-for-specific-modes/
-(add-hook 'prog-mode-hook #'hl-line-mode)
-(add-hook 'text-mode-hook #'hl-line-mode)
+;; https://github.com/nex3/perspective-el#some-musings-on-emacs-window-layouts
+;; ...but customized from there
+(customize-set-variable 'display-buffer-base-action
+  '((display-buffer-reuse-window display-buffer-at-bottom display-buffer-same-window)
+     (reusable-frames . t)))
+(customize-set-variable 'even-window-sizes nil)
+
 
 (fset 'yes-or-no-p 'y-or-n-p)   ;; Use 'y' instead of 'yes', etc.
 
-(when (version<= "26.0.50" emacs-version)
-  ;; Enable line numbers
-  (global-display-line-numbers-mode))
+ ;; Display line numbers and highlight the current line for many modes
+ ;; Use `hl-line-mode` instead of `global-hl-line-mode`; see
+ ;; https://emacsredux.com/blog/2020/11/21/disable-global-hl-line-mode-for-specific-modes/
+(dolist (mode '(text-mode-hook
+                prog-mode-hook
+                conf-mode-hook))
+ (add-hook mode (lambda () (display-line-numbers-mode 1)))
+ (add-hook mode #'hl-line-mode))
 
 
 ;; NOTE: (almost) every invocation of eval-{when,and}-compile in this file is for no other reason
