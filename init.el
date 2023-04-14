@@ -245,6 +245,11 @@
     '(".projectile" "platformio.ini" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs")))
 
 
+;; https://github.com/nlamirault/ripgrep.el
+(use-package ripgrep)
+(use-package projectile-ripgrep
+  :requires projectile)
+
 ;; The extensible vi layer for Emacs.
 ;; https://github.com/emacs-evil/evil
 (use-package evil
@@ -782,6 +787,10 @@
 (use-package vimrc-mode)
 
 
+;; https://melpa.org/#/protobuf-mode
+(use-package protobuf-mode)
+
+
 ;; Highlight TODO keywords
 ;; https://github.com/tarsius/hl-todo
 (use-package hl-todo
@@ -879,6 +888,9 @@
   :mode "Dockerfile.*\\'")
 
 
+(use-package terraform-mode
+  :hook (terraform-mode . terraform-format-on-save-mode))
+
 ;; Discover key bindings and their meaning for the current Emacs major mode
 ;; https://github.com/jguenther/discover-my-major
 (use-package discover-my-major)
@@ -899,6 +911,10 @@
 ;; https://github.com/yoshiki/yaml-mode
 (use-package yaml-mode)
 
+;; It's Magit! A Git Porcelain inside Emacs.
+;; https://github.com/magit/magit
+(use-package magit)
+
 
 ;; Themes
 ; decent built-in theme
@@ -916,6 +932,11 @@
 ;; Put icons in various places to spruce this place up a bit.
 ;; https://github.com/domtronn/all-the-icons.el
 (use-package all-the-icons)
+
+;; https://github.com/jtbm37/all-the-icons-dired
+(use-package all-the-icons-dired
+ :requires all-the-icons
+ :hook (dired-mode . all-the-icons-dired-mode))
 
 ;; doom-modeline is a modeline taken from the Doom Emacs project.
 ;; https://github.com/seagle0128/doom-modeline
