@@ -259,14 +259,13 @@
   (setq evil-default-cursor 'box)
   (setq evil-insert-state-cursor 'bar)
 
+  :functions evil-set-initial-state
+
   :config
   (add-hook 'after-init-hook 'evil-normalize-keymaps)
-
   (global-set-key (kbd "M-u") 'universal-argument)
-  ;; (evil-set-initial-state 'cider-repl-mode 'emacs)
-  ;; (evil-set-initial-state 'sly-mrepl-mode 'emacs)
-  ;; (evil-set-initial-state 'sly-db-mode 'emacs)
-  ;; (evil-set-initial-state 'xref--xref-buffer-mode 'emacs)
+  (evil-set-initial-state 'comint-mode 'emacs)
+  (evil-set-initial-state 'vterm-mode 'emacs)
 
   (evil-mode 1))
 
