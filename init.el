@@ -312,11 +312,25 @@ If FRAME is omitted or nil, use currently selected frame."
   (evil-mode 1))
 
 
+(defun my/quit-window (&optional kill window)
+  "Quit WINDOW and kill its buffer when KILL is nil."
+  (interactive "P")
+  (with-current-buffer (window-buffer (window-normalize-window window))
+      (quit-window (or kill "kill") window)))
+
+(defun my/remap-quit-window (keymap)
+  "Remap \"q\" when it is bound to #'quit-window in KEYMAP."
+  (evil-collection-define-key 'normal keymap "q" #'my/quit-window))
+
 ;; A set of keybindings for evil-mode
 ;; https://github.com/emacs-evil/evil-collection
 (use-package evil-collection
   :after evil
-  :config (evil-collection-init))
+  :functions evil-collection-set-readonly-bindings
+  :config
+  (require 'subr-x)
+  (advice-add 'evil-collection-set-readonly-bindings :after #'my/remap-quit-window)
+  (evil-collection-init))
 
 
 ;; Displays a visual hint on evil edit operations
