@@ -274,6 +274,7 @@ If FRAME is omitted or nil, use currently selected frame."
 (use-package projectile-ripgrep
   :requires projectile)
 
+
 ;; The extensible vi layer for Emacs.
 ;; https://github.com/emacs-evil/evil
 (use-package evil
@@ -295,8 +296,9 @@ If FRAME is omitted or nil, use currently selected frame."
   :config
   (add-hook 'after-init-hook 'evil-normalize-keymaps)
   (global-set-key (kbd "M-u") 'universal-argument)
-  (evil-set-initial-state 'comint-mode 'emacs)
-  (evil-set-initial-state 'vterm-mode 'emacs)
+  (when (fboundp 'evil-set-initial-state)
+    (evil-set-initial-state 'comint-mode 'emacs)
+    (evil-set-initial-state 'vterm-mode 'emacs))
 
   (evil-mode 1))
 
@@ -405,33 +407,6 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; https://github.com/tarsius/minions
 (use-package minions
   :config (minions-mode 1))
-
-
-;;; leaving this in but commented out just because it's my file and I'll do what I want
-
-;; Emacs incremental completion and selection narrowing framework
-;; https://github.com/emacs-helm/helm
-;; (use-package helm
-;;   :config
-;;   (helm-mode 1)
-;;   ;; Rebind M-x to use Helm mode.
-;;   (global-set-key (kbd "M-x") 'helm-M-x)
-;;   ;; Remap various functions to the Helm equivalent
-;;   (define-key global-map [remap find-file] 'helm-find-files)
-;;   (define-key global-map [remap occur] 'helm-occur)
-;;   (define-key global-map [remap list-buffers] 'helm-buffers-list)
-;;   (define-key global-map [remap dabbrev-expand] 'helm-dabbrev)
-;;   (define-key global-map [remap execute-extended-command] 'helm-M-x)
-;;   (unless (boundp 'completion-in-region-function)
-;;     (define-key lisp-interaction-mode-map [remap completion-at-point] 'helm-lisp-completion-at-point)
-;;     (define-key emacs-lisp-mode-map       [remap completion-at-point] 'helm-lisp-completion-at-point))
-
-;;   :custom
-;;   ;; Use 'rg' instead of 'ag' in Helm
-;;   (helm-grep-ag-command "rg --color=always --colors 'match:fg:black' --colors 'match:bg:yellow' --smart-case --no-heading --line-number %s %s %s")
-;;   (helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'"))
-;;   (helm-mode-fuzzy-match t)
-;;   (helm-completion-in-region-fuzzy-match t))
 
 
 ;; VERTical Interactive COmpletion
@@ -891,7 +866,8 @@ If FRAME is omitted or nil, use currently selected frame."
 
 
 ;; https://github.com/Fuco1/smartparens
-(use-package smartparens)
+(use-package smartparens
+  :hook (paredit-mode . smartparens-mode))
 
 
 ;; https://github.com/emacs-evil/evil-cleverparens
@@ -951,7 +927,9 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; It's Magit! A Git Porcelain inside Emacs.
 ;; https://github.com/magit/magit
-(use-package magit)
+(use-package magit
+  :bind ("C-c g" . magit-file-dispatch))
+
 
 ;; Perspective
 (use-package
@@ -992,7 +970,7 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; doom-modeline is a modeline taken from the Doom Emacs project.
 ;; https://github.com/seagle0128/doom-modeline
 (use-package doom-modeline
-  :after (all-the-icons)
+  :after all-the-icons
   :custom
   (doom-modeline-buffer-file-name-style 'relative-from-project)
   (doom-modeline-indent-info t)
@@ -1077,6 +1055,7 @@ If FRAME is omitted or nil, use currently selected frame."
   ("C-h f" . helpful-callable)
   ("C-h v" . helpful-variable)
   ("C-h k" . helpful-key)
+  ("C-h K" . helpful-kill-buffers)
   ("C-c C-d" . helpful-at-point))
 
 
