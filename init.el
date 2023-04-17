@@ -554,8 +554,26 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; Package for highlighting uncommitted changes
 ;; https://github.com/dgutov/diff-hl
-(use-package diff-hl
-  :config (global-diff-hl-mode))
+;; (use-package diff-hl
+;;   :config (global-diff-hl-mode))
+
+
+;;; git-gutter and git-gutter-fringe config taken from https://ianyepan.github.io/posts/emacs-git-gutter/
+
+;; Emacs port of GitGutter which is Sublime Text Plugin
+;; https://github.com/emacsorphanage/git-gutter
+(use-package git-gutter
+  :config
+  (setq git-gutter:update-interval 0.1)
+  (global-git-gutter-mode +1))
+
+;; Fringe version of git-gutter.el
+;; https://github.com/emacsorphanage/git-gutter-fringe
+(use-package git-gutter-fringe
+  :config
+  (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+  (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+  (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 
 
 ;; On-the-fly spell checking
