@@ -511,6 +511,8 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; TODO: check out consult-line{,-multi}, consult-xref, consult-{,rip}grep
 (use-package consult
   :requires (xref recentf)
+  :demand t
+  :bind (:map minibuffer-local-map ("C-r" . consult-history))
   :custom
   (xref-show-xrefs-function #'consult-xref)
   (xref-show-definitions-function #'consult-xref)
@@ -520,6 +522,7 @@ If FRAME is omitted or nil, use currently selected frame."
   (define-key global-map [remap switch-to-buffer] 'consult-buffer)
   (define-key global-map [remap switch-to-buffer-other-frame] 'consult-buffer-other-frame)
   (define-key global-map [remap switch-to-buffer-other-window] 'consult-buffer-other-window)
+  (define-key global-map [remap project-switch-to-buffer] 'consult-project-buffer)
 
   :hook (completion-list-mode . consult-preview-at-point-mode))
 
@@ -973,17 +976,24 @@ If FRAME is omitted or nil, use currently selected frame."
 
 
 ;; Perspective
-(use-package
-  perspective
-  ;; :bind
-  ;; (("C-x C-b" . persp-list-buffers)
-  ;;  ("C-x b" . persp-switch-to-buffer*)
-  ;;  ("C-x k" . persp-kill-buffer*))
-  :config (setq persp-state-default-file (expand-file-name "perspective.state" user-emacs-directory))
+(use-package perspective
+  :requires (projectile consult)
+  :bind
+  ;; ("C-x C-b" . persp-list-buffers)
+  ;; ("C-x b" . persp-switch-to-buffer*)
+  ;; ("C-x k" . persp-kill-buffer*)
+  :config
+  (setq persp-state-default-file (expand-file-name "perspective.state" user-emacs-directory))
+  (consult-customize consult--source-buffer :hidden t :default nil)
+  (add-to-list 'consult-buffer-sources persp-consult-source)
   :custom (persp-mode-prefix-key (kbd "C-c C-p"))
   :hook (kill-emacs . persp-state-save)
-  :init (persp-mode))
+  :init
+  (persp-mode))
 
+(use-package persp-projectile
+  :requires (perspective projectile)
+  :bind (:map projectile-mode-map ("C-c p p" . 'projectile-persp-switch-project)))
 
 ;; Themes
 
