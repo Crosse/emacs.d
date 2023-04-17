@@ -249,24 +249,33 @@ If FRAME is omitted or nil, use currently selected frame."
   :custom (shfmt-arguments '("-i" "4")))
 
 
+(require 'cl-lib)
+
 ;; Project Interaction Library for Emacs
 ;; https://github.com/bbatsov/projectile
 (eval-and-compile (require 'projectile nil t))
 (use-package projectile
+  :after consult
+  :commands projectile-run-vterm
   :config
   (projectile-mode 1)
-  (setq projectile-require-project-root t)
-  (setq projectile-dynamic-mode-line nil)
-  (setq projectile-indexing-method 'hybrid)
-  (setq projectile-sort-order 'recently-active)
+  (setq
+    projectile-require-project-root t
+    projectile-dynamic-mode-line nil
+    projectile-indexing-method 'hybrid
+    projectile-sort-order 'recently-active)
   (setq projectile-globally-ignored-directories
     (append projectile-globally-ignored-directories '("target" "build" ".elixir_ls" "vendor")))
+  (setq projectile-project-search-path
+    '(("~/code/mine" . 1) ("~/code/mine/lisp . 1") ("~/code/dotfiles" . 0) ("~/code/lantern" . 1)))
 
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-  (projectile-register-project-type 'platformio '("platformio.ini"))
-  (setq projectile-project-root-files-bottom-up
-    '(".projectile" "platformio.ini" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs")))
+  (projectile-register-project-type 'platformio '("platformio.ini") :project-file "platformio.ini")
+  ;; XXX do I need this if I have the line above?
+  (cl-pushnew "platformio.ini" projectile-project-root-files-bottom-up)
+  (when (fboundp 'consult-ripgrep)
+    (define-key projectile-mode-map [remap projectile-ripgrep] 'consult-ripgrep)))
 
 
 ;; https://github.com/nlamirault/ripgrep.el
