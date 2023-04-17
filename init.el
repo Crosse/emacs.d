@@ -60,7 +60,7 @@
   auto-save-default nil    ;; stop creating #autosave# files
   load-prefer-newer t      ;; Prefer newest version of a file.
   garbage-collection-messages t)
-                                        ;
+
 (setq-default truncate-lines t)
 
 ;; https://github.com/nex3/perspective-el#some-musings-on-emacs-window-layouts
@@ -88,6 +88,15 @@
 
 ;; Automatically break long lines at the fill-column.
 (setq-default auto-fill-function 'do-auto-fill)
+
+(defun my/frame-recenter (&optional frame)
+  "Center FRAME on the screen.
+FRAME can be a frame name, a terminal name, or a frame.
+If FRAME is omitted or nil, use currently selected frame."
+  (interactive)
+  (unless (eq 'maximised (frame-parameter nil 'fullscreen))
+    (modify-frame-parameters
+      frame '((user-position . t) (top . 0.5) (left . 0.5)))))
 
 (defun my/gui-setup (frame)
   "Set up things in FRAME that only make sense for graphical displays."
@@ -144,7 +153,12 @@
 (add-hook 'after-make-frame-functions #'my/gui-setup)
 
 ;; ...so to get around that, just unconditionally call the function when this file is read.
-(my/gui-setup (car (visible-frame-list)))
+
+(when window-system
+  (my/gui-setup (selected-frame))
+  ;; also move the frame into the center of the screen and make it larger.
+  (set-frame-size (selected-frame) 140 62)
+  (my/frame-recenter))
 
 
 (eval-and-compile (require 'sh-script nil t))
