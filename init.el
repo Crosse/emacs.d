@@ -352,6 +352,8 @@ If FRAME is omitted or nil, use currently selected frame."
   :hook (term-mode . eterm-256color-mode))
 
 (use-package vterm
+  :after projectile
+  :bind ("C-`" . projectile-run-vterm)
   :commands vterm
   :config
   ;; (setq term-prompt-regexp "^[^#$%>\\n]*[#$%>] *")
@@ -362,8 +364,7 @@ If FRAME is omitted or nil, use currently selected frame."
               (select-window window)
               (message "Failed to open file: %s" path))))
     vterm-eval-cmds)
-  (setq vterm-max-scrollback 10000)
-  :bind ("C-`" . projectile-run-vterm))
+  (setq vterm-max-scrollback 10000))
 
 
 (defun my/package-file-p (&optional filename _noerror)
