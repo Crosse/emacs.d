@@ -6,6 +6,7 @@
 
 ;;; Code:
 
+
 ;; taken from daviwil's Emacs config
 (add-hook 'emacs-startup-hook
   (lambda ()
@@ -16,26 +17,67 @@
 ;; set a higher GC during startup
 (setq gc-cons-threshold (* 50 1000 1000))
 ;; ...but set it much lower afterwards so that GC pauses aren't as significant.
-(add-hook 'after-init-hook (lambda () (setq gc-cons-threshold (* 2 1000 1000))))
+(add-hook 'after-init-hook (lambda () (setq gc-cons-threshold (* 8 1000 1000))))
 
-;; do this before changing user-emacs-directory
-(add-to-list 'load-path (expand-file-name "site-lisp" user-emacs-directory))
+;; For packages that aren't in [M]ELPA, copy or git clone them into ~/.emacs.d/site-lisp.
+(let ((default-directory (expand-file-name "site-lisp" user-emacs-directory)))
+  (add-to-list 'load-path default-directory)
+  (normal-top-level-add-to-load-path '("."))
+  (normal-top-level-add-subdirs-to-load-path))
+
+;; Add MELPA to the package archives
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
+
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
+
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+
+(require 'use-package)
+
+;; If a package "used" below doesn't exist, install it.
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
 
 ;; Change the user-emacs-directory to keep unwanted things out of ~/.emacs.d
 ;; https://github.com/daviwil/dotfiles/blob/fb83c040258391bbb0cb467278bc709cf995d0ac/.emacs.d/modules/dw-core.el#L25-L27
+(require 'url-history)
 (setq user-emacs-directory (expand-file-name "~/.cache/emacs/")
   url-history-file (expand-file-name "url/history" user-emacs-directory))
 
-;; Variables and Options
+(use-package recentf
+  :ensure nil
+  :init (recentf-mode))
 
-(column-number-mode t)          ;; Enable column information in the modeline.
-(save-place-mode t)             ;; Save our place in each file.
-(show-paren-mode t)             ;; Highlight matching braces.
-(size-indication-mode t)        ;; Show the size of the buffer in the modeline.
-(when (fboundp 'tool-bar-mode)
-  (tool-bar-mode -1))           ;; Disable the tool bar in the GUI.
-(xterm-mouse-mode)              ;; Enable mouse mode in terminals that support it.
-(which-function-mode 1)         ;; Display the current function name in the mode line.
+(use-package no-littering
+  :config
+  (add-to-list 'recentf-exclude
+    (recentf-expand-file-name no-littering-var-directory))
+  (add-to-list 'recentf-exclude
+    (recentf-expand-file-name no-littering-etc-directory))
+  (setq auto-save-file-name-transforms
+    `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
+
+;; Keep customization settings in a temporary file
+;; https://github.com/daviwil/dotfiles/blob/fb83c040258391bbb0cb467278bc709cf995d0ac/.emacs.d/modules/dw-core.el#L33-L38
+(setq custom-file
+  (if (boundp 'server-socket-dir)
+    (expand-file-name "custom.el" server-socket-dir)
+    (expand-file-name (format "emacs-custom-%s.el" (user-uid)) temporary-file-directory)))
+(load custom-file t)
+
+;; Always start the server so that emacsclient can connect.
+;; (do this before setting the custom-file below)
+(when (fboundp 'server-running-p)
+  (unless (server-running-p)
+    (server-start)))
+
+
+;;; --- Keybindings
 
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -48,18 +90,33 @@
 
 (global-set-key (kbd "C-c C-k") #'my/quick-kill-buffer)
 
+;; Mimic Visual Studio
 (global-unset-key (kbd "C-<return>"))
 (global-set-key (kbd "C-<return>") 'evil-open-above)
 
-(setq
-  vc-follow-symlinks t     ;; Always follow symlinks.
-  scroll-margin 3          ;; Make sure there are at least 3 lines above or below the current line on-screen.
-  scroll-conservatively 5  ;; Don't recenter point unless moving more than five lines outside of the frame.
-  inhibit-startup-screen t ;; Don't show the welcome screen
-  make-backup-files nil    ;; stop creating backup~ files
-  auto-save-default nil    ;; stop creating #autosave# files
-  load-prefer-newer t      ;; Prefer newest version of a file.
-  garbage-collection-messages t)
+;; fix for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=59081
+;; can be removed after upgrading to Emacs 29.
+(add-to-list 'image-types 'svg)
+
+;;; --- Interface
+
+(column-number-mode t)          ;; Enable column information in the modeline.
+(save-place-mode t)             ;; Save our place in each file.
+(show-paren-mode t)             ;; Highlight matching braces.
+(size-indication-mode t)        ;; Show the size of the buffer in the modeline.
+(when (fboundp 'tool-bar-mode)
+  (tool-bar-mode -1))           ;; Disable the tool bar in the GUI.
+(xterm-mouse-mode)              ;; Enable mouse mode in terminals that support it.
+(which-function-mode 1)         ;; Display the current function name in the mode line.
+
+(customize-set-variable 'vc-follow-symlinks t)     ;; Always follow symlinks.
+(customize-set-variable 'scroll-margin 3)          ;; Make sure there are at least 3 lines above or below the current line on-screen.
+(customize-set-variable 'scroll-conservatively 5)  ;; Don't recenter point unless moving more than five lines outside of the frame.
+(customize-set-variable 'inhibit-startup-screen t) ;; Don't show the welcome screen
+(customize-set-variable 'make-backup-files nil)    ;; stop creating backup~ files
+(customize-set-variable 'auto-save-default nil)    ;; stop creating #autosave# files
+(customize-set-variable 'garbage-collection-messages t)
+(customize-set-variable 'display-line-numbers-width-start t)
 
 (setq-default truncate-lines t)
 
@@ -83,9 +140,6 @@
   (add-hook mode #'hl-line-mode))
 
 
-;; NOTE: (almost) every invocation of eval-{when,and}-compile in this file is for no other reason
-;; than to satisfy flycheck.
-
 ;; Automatically break long lines at the fill-column.
 (setq-default auto-fill-function 'do-auto-fill)
 
@@ -98,12 +152,10 @@ If FRAME is omitted or nil, use currently selected frame."
     (modify-frame-parameters
       frame '((user-position . t) (top . 0.5) (left . 0.5)))))
 
-(defun my/gui-setup (frame)
+(defun my/gui-setup ()
   "Set up things in FRAME that only make sense for graphical displays."
-  (with-selected-frame frame
-    (when (display-graphic-p)
-      ;; (set-face-attribute 'default nil :font "SauceCodePro NF-12")
-      (set-face-attribute 'default nil :font "BlexMono NF-13")
+  ;; (set-face-attribute 'default nil :font "SauceCodePro NF-12")
+  (set-face-attribute 'default nil :font "BlexMono NF-12")
       ;; (set-face-attribute 'default nil :font "Iosevka NF-13")
 
       ;; (add-hook 'prog-mode-hook #'prettify-symbols-mode)
@@ -138,15 +190,8 @@ If FRAME is omitted or nil, use currently selected frame."
       ;;   (dolist (char-regexp alist)
       ;;     (set-char-table-range composition-function-table (car char-regexp)
       ;;       `([,(cdr char-regexp) 0 font-shape-gstring]))))
+  )
 
-      ;; Smooth scrolling...sorta.
-      (use-package pixel-scroll
-        :ensure nil
-        :config
-        (setq pixel-resolution-fine-flag t)
-        (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
-        (setq mouse-wheel-progressive-speed nil)
-        (pixel-scroll-mode t)))))
 
 ;; This hook will not run for the initial frame created when starting Emacs.
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
@@ -154,82 +199,23 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; ...so to get around that, just unconditionally call the function when this file is read.
 
-(when window-system
-  (my/gui-setup (selected-frame))
-  ;; also move the frame into the center of the screen and make it larger.
-  (set-frame-size (selected-frame) 140 62)
-  (my/frame-recenter))
+(if (display-graphic-p)
+  (progn
+    (my/gui-setup)
+    ;; also move the frame into the center of the screen and make it larger.
+    (set-frame-size (selected-frame) 140 62)
+    (my/frame-recenter))
+  (tooltip-mode nil))
 
-
-(eval-and-compile (require 'sh-script nil t))
-(add-hook 'sh-mode-hook
-  (lambda ()
-    (setq-local sh-basic-offset 4)))
-
-
-(require 'cc-vars)
-(setq c-default-style
-  '((java-mode . "java")
-     (awk-mode . "awk")
-     (other . "bsd")))
-
-(setq-default ruby-indent-level 2)
-
-
-;; Keep customization settings in a temporary file (thanks Ambrevar!)
-;; https://github.com/daviwil/dotfiles/blob/fb83c040258391bbb0cb467278bc709cf995d0ac/.emacs.d/modules/dw-core.el#L33-L38
-(setq custom-file
-  (if (boundp 'server-socket-dir)
-    (expand-file-name "custom.el" server-socket-dir)
-    (expand-file-name (format "emacs-custom-%s.el" (user-uid)) temporary-file-directory)))
-(load custom-file t)
-
-
-;; Always start the server so that emacsclient can connect.
-(require 'server)
-(unless (server-running-p)
-  (server-start))
-
-
-;; For packages that aren't in [M]ELPA, copy or git clone them into ~/.emacs.d/lisp.
-(let ((default-directory "~/.emacs.d/site-lisp"))
-  (normal-top-level-add-to-load-path '("."))
-  (normal-top-level-add-subdirs-to-load-path))
-
-;; Add MELPA to the package archives
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-
-;; Work around a problem with ELPA and TLS 1.3 on Emacs < 27
-;; See https://www.reddit.com/r/emacs/comments/cdf48c/failed_to_download_gnu_archive/
-(require 'gnutls)
-(when (version<= emacs-version "26.99.0")
-  (defvar gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
-
-;; Not needed with use-package.
-;; (package-initialize)
-
-;; Use the "use-package" package to manage packages.
-;; Make sure it's loaded *after* package.el but *before* anything else.
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-
-(eval-when-compile
-  (package-initialize)
-  (require 'use-package))
-
-(require 'bind-key)
-
-;; If a package "used" below doesn't exist, install it.
-(require 'use-package-ensure)
-(setq use-package-always-ensure t)
-
-(use-package esup
-  :ensure t
-  ;; To use MELPA Stable use ":pin melpa-stable",
-  :pin melpa)
-
+;; Smooth scrolling...sorta.
+(use-package pixel-scroll
+  :ensure nil
+  :if (display-graphic-p)
+  :config
+  (setq pixel-resolution-fine-flag t)
+  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+  (setq mouse-wheel-progressive-speed nil)
+  (pixel-scroll-mode t))
 
 ;; Make Emacs use the $PATH set up by the user's shell
 ;; https://github.com/purcell/exec-path-from-shell
@@ -244,18 +230,10 @@ If FRAME is omitted or nil, use currently selected frame."
     (add-to-list 'exec-path-from-shell-variables var))
   (exec-path-from-shell-initialize))
 
-(use-package shfmt
-  :hook (sh-mode . shfmt-on-save-mode)
-  :custom (shfmt-arguments '("-i" "4")))
-
-
-(require 'cl-lib)
-
 ;; Project Interaction Library for Emacs
 ;; https://github.com/bbatsov/projectile
 (eval-and-compile (require 'projectile nil t))
 (use-package projectile
-  :after consult
   :commands projectile-run-vterm
   :config
   (projectile-mode 1)
@@ -273,7 +251,10 @@ If FRAME is omitted or nil, use currently selected frame."
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (projectile-register-project-type 'platformio '("platformio.ini") :project-file "platformio.ini")
   ;; XXX do I need this if I have the line above?
-  (cl-pushnew "platformio.ini" projectile-project-root-files-bottom-up)
+  (add-to-list 'projectile-project-root-files-bottom-up "platformio.ini"))
+
+(with-eval-after-load 'consult
+  (require 'projectile)
   (when (fboundp 'consult-ripgrep)
     (define-key projectile-mode-map [remap projectile-ripgrep] 'consult-ripgrep)))
 
@@ -281,7 +262,7 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; https://github.com/nlamirault/ripgrep.el
 (use-package ripgrep)
 (use-package projectile-ripgrep
-  :requires projectile)
+  :requires (ripgrep projectile))
 
 
 ;; The extensible vi layer for Emacs.
@@ -289,16 +270,16 @@ If FRAME is omitted or nil, use currently selected frame."
 (use-package evil
   ;; TODO: unbind <TAB> from evil-jump-forward
   :init
-  ;; Set up for evil-collection.
-  (setq evil-want-integration t
+  (setq
+    evil-default-cursor 'box
+    evil-insert-state-cursor 'bar
     evil-move-beyond-eol t
-    evil-want-keybinding nil
+    evil-respect-visual-line-mode t
     evil-undo-system 'undo-tree
-    ;; Take C-u back for scrolling a half-page up.
-    evil-want-C-u-scroll t)
+    evil-want-C-u-scroll t ; Take C-u back for scrolling a half-page up.
+    evil-want-integration t
+    evil-want-keybinding nil)
   (setq-default evil-symbol-word-search t)
-  (setq evil-default-cursor 'box)
-  (setq evil-insert-state-cursor 'bar)
 
   :functions evil-set-initial-state
 
@@ -307,9 +288,9 @@ If FRAME is omitted or nil, use currently selected frame."
   (global-set-key (kbd "M-u") 'universal-argument)
   (when (fboundp 'evil-set-initial-state)
     (evil-set-initial-state 'comint-mode 'emacs)
-    (evil-set-initial-state 'vterm-mode 'emacs))
+    (evil-set-initial-state 'vterm-mode 'emacs)))
 
-  (evil-mode 1))
+(evil-mode 1)
 
 
 (defun my/quit-window (&optional kill window)
@@ -320,16 +301,17 @@ If FRAME is omitted or nil, use currently selected frame."
 
 (defun my/remap-quit-window (keymap)
   "Remap \"q\" when it is bound to #'quit-window in KEYMAP."
-  (evil-collection-define-key 'normal keymap "q" #'my/quit-window))
+  (when (fboundp 'evil-collection-define-key)
+    (evil-collection-define-key 'normal keymap "q" #'my/quit-window)))
 
 ;; A set of keybindings for evil-mode
 ;; https://github.com/emacs-evil/evil-collection
 (use-package evil-collection
-  :after evil
+  :requires evil
   :functions evil-collection-set-readonly-bindings
   :config
   (require 'subr-x)
-  (advice-add 'evil-collection-set-readonly-bindings :after #'my/remap-quit-window)
+  (advice-add 'evil-collection-set-readonly-bindings :after #'my/remap-quit-window) ; must be before init!
   (evil-collection-init))
 
 
@@ -337,13 +319,16 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; https://github.com/edkolev/evil-goggles
 (eval-and-compile (require 'evil-goggles nil t))
 (use-package evil-goggles
-  :after evil
+  :requires evil
   :config
   (evil-goggles-mode)
   (evil-goggles-use-diff-faces))
 
 
+;;; --- Terminals
+
 (use-package term
+  :ensure nil
   :config
   (setq explicit-shell-file-name "bash")
   (setq term-prompt-regexp "^[^#$%>\\n]*[#$%>] *"))
@@ -352,7 +337,7 @@ If FRAME is omitted or nil, use currently selected frame."
   :hook (term-mode . eterm-256color-mode))
 
 (use-package vterm
-  :after projectile
+  :after projectile ; we have :bind and :commands so this is okay
   :bind ("C-`" . projectile-run-vterm)
   :commands vterm
   :config
@@ -367,17 +352,15 @@ If FRAME is omitted or nil, use currently selected frame."
   (setq vterm-max-scrollback 10000))
 
 
-(defun my/package-file-p (&optional filename _noerror)
+(defun my/enable-undo-p (&optional filename _noerror)
   "Return t if FILENAME resides under ~/.emacs.d/elpa."
   (interactive "GEnter filename: ")
   (let* ((elpa (expand-file-name "~/.emacs.d/elpa/"))
           (fname (if filename filename buffer-file-name))
           (expanded (expand-file-name fname)))
-    (if (string-prefix-p elpa expanded)
-      (progn
-        (message "file under %s" elpa)
-        t)
-      nil)))
+    (or
+      (string-prefix-p elpa expanded)
+      (not (buffer-name (buffer-base-buffer))))))
 
 ;; undo-tree, required for evil `C-r` redo functionality
 ;; https://www.emacswiki.org/emacs/UndoTree
@@ -390,8 +373,8 @@ If FRAME is omitted or nil, use currently selected frame."
   (setq undo-tree-visualizer-timestamps t)
   (setq undo-tree-visualizer-diff t)
   (advice-add 'undo-tree-make-history-save-file-name :filter-return #'(lambda (FILENAME) (concat FILENAME ".gz")))
-  (advice-add 'undo-tree-load-history :before-until #'my/package-file-p)
-  (advice-add 'undo-tree-save-history :before-until #'my/package-file-p)
+  (advice-add 'undo-tree-load-history :before-until #'my/enable-undo-p)
+  (advice-add 'undo-tree-save-history :before-until #'my/enable-undo-p)
   (global-undo-tree-mode 1))
 
 
@@ -410,14 +393,15 @@ If FRAME is omitted or nil, use currently selected frame."
           :map company-active-map
           ("<return>" . nil)
           ("RET" . nil)
-          ("<tab>" . company-complete-selection))
+          ("<tab>" . company-complete-selection)
+          ("TAB" . company-complete-selection) )
   :hook (after-init . global-company-mode))
 
 
 ;; A company front-end with icons
 ;; https://github.com/sebastiencs/company-box
 (use-package company-box
-  :after company
+  :after company ; We :hook so this is okay
   :hook (company-mode . company-box-mode))
 
 
@@ -439,11 +423,11 @@ If FRAME is omitted or nil, use currently selected frame."
   :init
   (vertico-mode)
   (vertico-mouse-mode)
-  (setq vertico-cycle t)
+  :custom
+  (vertico-cycle t)
   :bind (:map minibuffer-local-map
           ("C-l" . vertico-directory-up))
   :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
-
 
 ;; Emacs completion style that matches multiple regexps in any order
 ;; https://github.com/oantolin/orderless
@@ -464,7 +448,7 @@ If FRAME is omitted or nil, use currently selected frame."
 
 (use-package crm
   :ensure nil
-  :init
+  :config
   ;; Add prompt indicator to `completing-read-multiple'.
   ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
   (defun crm-indicator (args)
@@ -474,7 +458,7 @@ If FRAME is omitted or nil, use currently selected frame."
               crm-separator)
             (car args))
       (cdr args)))
-  (advice-add #'completing-read-multiple :filter-args #'crm-indicator))
+  (advice-add #'completing-read-multiple :filter-args 'crm-indicator))
 
 (use-package emacs
   :ensure nil
@@ -501,18 +485,15 @@ If FRAME is omitted or nil, use currently selected frame."
 
   :init (marginalia-mode))
 
-(use-package recentf
-  :ensure nil
-  :init (recentf-mode))
-
-(use-package xref :ensure nil)
+(use-package xref
+  :ensure nil)
 
 ;; Consulting completing-read
 ;; https://github.com/minad/consult/
 ;; TODO: check out consult-line{,-multi}, consult-xref, consult-{,rip}grep
 (use-package consult
   :requires (xref recentf)
-  :demand t
+  :demand t ; TODO: this might not be necessary since we :hook?
   :bind (:map minibuffer-local-map ("C-r" . consult-history))
   :custom
   (xref-show-xrefs-function #'consult-xref)
@@ -546,7 +527,7 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; Embark-Consult integration
 ;; Also in https://github.com/oantolin/embark
 (use-package embark-consult
-  :requires embark
+  :requires (embark consult)
   :hook (embark-collect-mode . consult-preview-at-point-mode))
 
 
@@ -556,37 +537,12 @@ If FRAME is omitted or nil, use currently selected frame."
   :config
   (which-key-mode 1))
 
-;; Package for highlighting uncommitted changes
-;; https://github.com/dgutov/diff-hl
-;; (use-package diff-hl
-;;   :config (global-diff-hl-mode))
-
-
-;;; git-gutter and git-gutter-fringe config taken from https://ianyepan.github.io/posts/emacs-git-gutter/
-
-;; Emacs port of GitGutter which is Sublime Text Plugin
-;; https://github.com/emacsorphanage/git-gutter
-(use-package git-gutter
-  :config
-  (setq git-gutter:update-interval 0.1)
-  (global-git-gutter-mode +1))
-
-;; Fringe version of git-gutter.el
-;; https://github.com/emacsorphanage/git-gutter-fringe
-(use-package git-gutter-fringe
-  :config
-  (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
-  (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
-  (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
-
 
 ;; On-the-fly spell checking
 ;; https://www.emacswiki.org/emacs/FlySpell
 ;; Requires either ispell, aspell, or hunspell
 ;; (Preferring aspell right now)
 ;; $ pkgin in aspell aspell-en
-;;
-;; Oh btw, this isn't an actual package so we're abusing use-package here (hence, ":ensure nil").
 (use-package flyspell
   :ensure nil
   :defer 1
@@ -610,6 +566,360 @@ If FRAME is omitted or nil, use currently selected frame."
             (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US")))))
 
 
+;; A tree layout file explorer for Emacs
+;; https://github.com/Alexander-Miller/treemacs/
+(use-package treemacs
+  :defer t
+  :custom
+  (treemacs-project-follow-cleanup t)
+  (treemacs-project-follow-mode t)
+  :config
+  (treemacs-resize-icons 16))
+
+;; Evil mode integration for treemacs
+;; https://github.com/Alexander-Miller/treemacs/blob/master/src/extra/treemacs-evil.el
+(eval-and-compile (require 'treemacs-interface nil t))
+(use-package treemacs-evil
+  :config
+  (define-key evil-treemacs-state-map (kbd "TAB") #'treemacs-TAB-action))
+
+
+;; Integration for treemode and lsp-mode
+;; https://github.com/emacs-lsp/lsp-treemacs
+(use-package lsp-treemacs
+  :after (treemacs lsp-mode) ; we :bind so this is okay
+  :config
+  (lsp-treemacs-sync-mode 1)
+  :bind
+  (:map global-map
+    ("<f11>" . lsp-treemacs-errors-list)))
+
+
+;; LaTeX support
+;; https://www.gnu.org/software/emacs/manual/html_node/emacs/TeX-Mode.html
+(use-package latex
+  :ensure nil
+  :requires (auctex reftex)
+
+  :init
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (setq-default TeX-master nil)
+  (when (boundp 'reftex-plug-into-AUCTeX)
+    (setq reftex-plug-into-AUCTeX t))
+  (setq TeX-PDF-mode t)
+
+  :hook
+  (LaTeX-mode . company-auctex-init)
+  (LaTeX-mode . LaTeX-math-mode)
+  (LaTeX-mode . turn-on-reftex)
+  (TeX-mode . (lambda () (setq TeX-command-default "latexmk"))))
+
+(add-hook 'LaTeX-mode-hook
+  (lambda ()
+    (push
+      '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
+         :help "Run latexmk on file")
+      TeX-command-list)))
+
+;; Adds LatexMk support to AUCTeX.
+;; https://github.com/tom-tan/auctex-latexmk
+(use-package auctex-latexmk
+  :requires latex
+  :config (auctex-latexmk-setup))
+
+;; Perspective
+(use-package perspective
+  :requires (projectile consult)
+  :demand t
+  :config
+  (setq persp-state-default-file (expand-file-name "perspective.state" user-emacs-directory))
+  (when (fboundp 'consult--customize-put) ; shut up, flycheck (consult-customize, below, is a macro)
+    (consult-customize consult--source-buffer :hidden t :default nil))
+  (add-to-list 'consult-buffer-sources persp-consult-source)
+  :custom (persp-mode-prefix-key (kbd "C-c C-p"))
+  :hook (kill-emacs . persp-state-save)
+  :init
+  (persp-mode))
+
+(use-package persp-projectile
+  :requires (perspective projectile)
+  :bind (:map projectile-mode-map ("C-c p p" . 'projectile-persp-switch-project)))
+
+;; Put icons in various places to spruce this place up a bit.
+;; https://github.com/domtronn/all-the-icons.el
+(use-package all-the-icons
+  :if (display-graphic-p))
+
+;; https://github.com/jtbm37/all-the-icons-dired
+(use-package all-the-icons-dired
+  :requires all-the-icons
+  :if (display-graphic-p)
+  :hook (dired-mode . all-the-icons-dired-mode))
+
+
+;; The theming came from https://zzamboni.org/post/beautifying-org-mode-in-emacs/
+(defun my/org-graphical-setup ()
+  "Set up Org Mode fonts and whatnot."
+    (let* ((serif-tuple
+             (cond
+               ((x-list-fonts "Crimson Pro") '(:font "Crimson Pro"))
+               ((x-list-fonts "Big Caslon") '(:font "Big Caslon"))
+               ((x-list-fonts "Georgia") '(:font "Georgia"))
+               ((x-list-fonts "Serif") '(:font "Serif"))
+               (nil (warn "Cannot find a serif font. Install something!"))))
+            (sans-serif-tuple
+              (cond
+                ((x-list-fonts "Quattrocento Sans") '(:font "Quattrocento Sans"))
+                ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
+                ((x-list-fonts "Lucida Grande") '(:font "Lucida Grande"))
+                ((x-list-fonts "Verdana") '(:font "Verdana"))
+                ((x-list-fonts "Sans Serif") '(:font "Sans Serif"))
+                (nil (warn "Cannot find a sans-serif font. Install something!"))))
+            (base-font-color (face-foreground 'default nil 'default))
+            (headline `(:inherit default :weight bold :foreground ,base-font-color)))
+      (custom-theme-set-faces
+        'user
+        `(org-level-8 ((t (,@headline ,@serif-tuple))))
+        `(org-level-7 ((t (,@headline ,@serif-tuple))))
+        `(org-level-6 ((t (,@headline ,@serif-tuple))))
+        `(org-level-5 ((t (,@headline ,@serif-tuple))))
+        `(org-level-4 ((t (,@headline ,@serif-tuple :height 1.1))))
+        `(org-level-3 ((t (,@headline ,@serif-tuple :height 1.25))))
+        `(org-level-2 ((t (,@headline ,@serif-tuple :height 1.4))))
+        `(org-level-1 ((t (,@headline ,@serif-tuple :height 1.6))))
+        `(org-document-title ((t (,@headline ,@serif-tuple :height 2.0 :underline nil)))))
+
+      (custom-theme-set-faces
+        'user
+        `(variable-pitch ((t :family ,(plist-get sans-serif-tuple :font) :height 140 :weight thin)))
+        `(fixed-pitch ((t :family "BlexMono NF" :height 120 :weight medium)))))
+
+    (custom-theme-set-faces
+      'user
+      '(org-block ((t (:inherit fixed-pitch))))
+      '(org-code ((t (:inherit (shadow fixed-pitch)))))
+      '(org-document-info ((t (:foreground "dark orange"))))
+      '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+      '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
+      '(org-link ((t (:foreground "royal blue" :underline t))))
+      '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+      '(org-property-value ((t (:inherit fixed-pitch))) t)
+      '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+      '(org-table ((t (:inherit fixed-pitch :foreground "#83a598"))))
+      '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+      '(org-verbatim ((t (:inherit (shadow fixed-pitch)))))
+      '(line-number ((t (:inherit (shadow fixed-pitch)))))
+      '(line-number-current-line ((t (:inherit (shadow fixed-pitch)))))))
+
+(use-package org
+  :custom
+  (org-hide-emphasis-markers t)
+  :config
+  (font-lock-add-keywords 'org-mode
+    '(("^ *\\([-]\\) "
+        (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+
+  (when (display-graphic-p)
+    (my/org-graphical-setup)
+    (add-hook 'org-mode-hook #'variable-pitch-mode))
+
+  :hook
+  (org-mode . visual-line-mode))
+
+;; Org mode
+(use-package toc-org
+  :hook (org-mode . toc-org-mode))
+
+(use-package org-bullets
+  :hook
+  (org-mode . (lambda () (org-bullets-mode 1))))
+
+;; Themes
+
+;; decent built-in theme
+;; (load-theme 'tsdh-light t)
+
+;; (use-package color-theme-sanityinc-tomorrow)
+;; (load-theme 'sanityinc-tomorrow-day t)
+
+;; (use-package color-theme-sanityinc-solarized)
+;; (load-theme 'sanityinc-solarized-light t)
+
+;; (use-package darktooth-theme
+;;   :config (load-theme 'darktooth t))
+
+(use-package doom-themes
+  :custom
+  (doom-themes-enable-bold nil)
+  (doom-themes-enable-italic nil)
+  (doom-themes-treemacs-theme "doom-colors")
+
+  (doom-gruvbox-dark-variant "hard")
+  (doom-gruvbox-padded-modeline nil)
+  (doom-solarized-light-padded-modeline t)
+  (doom-earl-grey-brighter-comments t)
+
+  :config
+  (doom-themes-visual-bell-config)
+  (doom-themes-treemacs-config)
+  (doom-themes-org-config)
+  (let
+    ((frame-background-mode 'light))
+    (frame-set-background-mode nil))
+
+  (if (display-graphic-p)
+    (load-theme 'doom-solarized-light t)
+    (load-theme 'tsdh-light)))
+
+;;(use-package command-log-mode)
+
+;; doom-modeline is a modeline taken from the Doom Emacs project.
+;; https://github.com/seagle0128/doom-modeline
+(use-package doom-modeline
+  :after all-the-icons ; we :hook so this is okay
+  :custom
+  (doom-modeline-buffer-file-name-style 'relative-from-project)
+  (doom-modeline-indent-info t)
+  (doom-modeline-minor-modes t)
+  :hook (after-init . doom-modeline-mode))
+
+(defun setup-frame-doom (frame)
+  "Enable icons in the modeline only if FRAME is a graphical frame."
+  (with-selected-frame frame
+    (setq doom-modeline-icon (display-graphic-p))))
+
+(add-hook 'after-make-frame-functions #'setup-frame-doom)
+
+;; (require 'tab-line)
+;; (defun sorted-buffers-list ()
+;;   "Return buffer list sorted by name."
+;;   (sort (tab-line-tabs-buffer-list)
+;;     #'(lambda (first second)
+;;         (string<
+;;           (buffer-name first)
+;;           (buffer-name second)))))
+
+;; (defun my/tab-line-tabs-function ()
+;;   "My tabs line function."
+;;   (seq-filter
+;;     (apply-partially
+;;       (lambda (buffer)
+;;         (let ((bufname (buffer-name buffer)))
+;;           (cond
+;;             ((string-equal bufname (buffer-name (current-buffer))) buffer)
+;;             ((string-prefix-p "*vterm" bufname) buffer)
+;;             ((string-equal "*scratch*" bufname) buffer)
+;;             ((string-equal "*Messages*" bufname) buffer)
+;;             ((not (or
+;;                     (string-search ":" bufname)
+;;                     (string-prefix-p "*" bufname))) buffer)))))
+;;     (sorted-buffers-list)))
+
+;; (use-package tab-line
+;;   :ensure nil
+;;   :demand t                          ; required because we :bind, but we don't want to defer loading
+;;   :custom
+;;   (tab-line-new-button-show nil)
+;;   (tab-line-close-button-show t)
+;;   :config
+;;   (setq tab-line-separator " ")
+;;   (setq tab-line-tabs-function #'tab-line-tabs-window-buffers)
+
+;;   :bind
+;;   ("s-}" . tab-line-switch-to-next-tab)
+;;   ("s-{" . tab-line-switch-to-prev-tab)
+
+;;   :hook
+;;   (after-init . global-tab-line-mode))
+
+;; A better Emacs *help* buffer.
+;; https://github.com/Wilfred/helpful
+(use-package helpful
+  :bind
+  ("C-h f" . helpful-callable)
+  ("C-h v" . helpful-variable)
+  ("C-h k" . helpful-key)
+  ("C-h K" . helpful-kill-buffers)
+  ("C-c C-d" . helpful-at-point))
+
+
+;; Wakatime - automatic time tracking and metrics generated from your
+;; programming activity
+(use-package wakatime-mode
+  :config (setq wakatime-cli-path (expand-file-name "~/.wakatime/wakatime-cli"))
+  :hook (after-init . global-wakatime-mode))
+
+(use-package rainbow-mode
+  :hook (after-init . rainbow-mode))
+
+(defun my/solaire-mode-real-buffer-p ()
+  "Return t if the current buffer is a real (file-visiting) buffer, or a terminal."
+  (or
+    (solaire-mode-real-buffer-p)
+    (eq major-mode #'vterm-mode)))
+
+;; "If only certain buffers could be so grossly incandescent."
+;; https://github.com/hlissner/emacs-solaire-mode
+(use-package solaire-mode
+  :config
+  (setq solaire-mode-real-buffer-fn #'my/solaire-mode-real-buffer-p)
+  :init
+  (solaire-global-mode +1))
+
+(defvar electrify-return-match
+  "[\]}\)\"]"
+  "If this regexp matches the text after the cursor, do an \"electric\" return.")
+
+(defun electrify-return-if-match (arg)
+  "TODO ARG."
+  (interactive "P")
+  (let ((case-fold-search nil))
+    (if (looking-at electrify-return-match)
+      (save-excursion (newline-and-indent)))
+    (newline arg)
+    (indent-according-to-mode)))
+
+(global-set-key (kbd "RET") 'electrify-return-if-match)
+
+
+;; Make the Emacs GUI frame arguably prettier on macOS
+(when (string-equal system-type "darwin")
+  (add-to-list 'default-frame-alist'(ns-transparent-titlebar . t))
+  (add-to-list 'default-frame-alist'(ns-appearance . light)))
+
+
+;; trackpad / mouse wheel scrolls buffer
+(global-set-key [mouse-4] 'scroll-down-line)
+(global-set-key [mouse-5] 'scroll-up-line)
+
+
+;;; --- Development
+
+;; Shell scripting
+(eval-and-compile (require 'sh-script nil t))
+(add-hook 'sh-mode-hook
+  (lambda ()
+    (setq-local sh-basic-offset 4)))
+
+(use-package shfmt
+  :hook (sh-mode . shfmt-on-save-mode)
+  :custom (shfmt-arguments '("-i" "4")))
+
+(require 'cc-vars)
+(setq c-default-style
+  '((java-mode . "java")
+     (awk-mode . "awk")
+     (other . "bsd")))
+
+(use-package c-mode
+  :ensure nil
+  :hook (c-mode . lsp-deferred))
+
+(use-package c++-mode
+  :ensure nil
+  :hook (c++-mode . lsp-deferred))
+
 ;; A replacement for the emacs' built-in command `comment-dwim'.
 ;; https://github.com/remyferre/comment-dwim-2
 (use-package comment-dwim-2
@@ -617,52 +927,41 @@ If FRAME is omitted or nil, use currently selected frame."
   (global-set-key (kbd "M-;") 'comment-dwim-2)
   (setq comment-dwim-2--inline-comment-behavior 'reindent-comment))
 
-(eval-and-compile
-  (require 'f nil t)
-  (require 's nil t))
-(defun my/rust-src-path ()
-  "Find Rust's source path."
-  (or
-    (getenv "RUST_SRC_PATH")
-    (when (executable-find "rustc")
-      (let* ((sysroot (s-trim-right
-                        (shell-command-to-string
-                          (format "%s --print sysroot" (executable-find "rustc")))))
-              (library-path (f-join sysroot "lib/rustlib/src/rust/library"))
-              (lib-path (f-join sysroot "lib/rustlib/src/rust/src"))
-              (src-path (cond
-                          ((file-exists-p library-path) library-path)
-                          ((file-exists-p lib-path) lib-path))))
-        (when (file-exists-p src-path)
-          src-path)))
-    "/usr/local/src/rust/src"))
+;; `checkdoc` thinks my Emacs init files should conform to the format of a "regular" Emacs lisp
+;; and I'm just tired of it telling me that the files don't start "correctly".
+(defun my/disable-checkdoc-in-init-files ()
+  "Disable Flycheck's checkdoc checker the current buffer is an Emacs init file."
+  (when-let* ((bufname (buffer-file-name (current-buffer)))
+               (filename (expand-file-name bufname))
+               (dir (file-name-directory filename))
+               (ext (file-name-extension filename)))
+    (when (and
+            (or
+              (string-equal dir (expand-file-name "~/.emacs.d/"))
+              (string-equal dir (expand-file-name "~/.emacs.d/modules/")))
+            (string-equal ext "el"))
+      (setq-local flycheck-disabled-checkers '(emacs-lisp-checkdoc)))))
 
-;; Rust support
-;; https://github.com/rust-lang/rust-mode
-;; (use-package rust-mode
-;;   :custom (rust-format-on-save t))
+;; A modern, on-the-fly syntac checking extension.
+;; https://www.flycheck.org/en/latest/
 ;;
-;; https://github.com/brotzeit/rustic
-(use-package rustic
-  :requires flycheck
-  :custom
-  (rustic-format-on-save nil)
-  (rustic-lsp-format t)
-  (rustic-lsp-server 'rust-analyzer)
-  (rustic-racer-src-path (my/rust-src-path)))
-
-;; Better Rust/Cargo support for Flycheck
-;; https://github.com/flycheck/flycheck-rust
-(use-package flycheck-rust
-  :after (rust-mode rustic-mode)
-  :hook (flycheck-mode . flycheck-rust-setup))
-
-
-(defun my/lsp-format ()
-  "Enable LSP formatting for Rust."
-  (when (member major-mode '(rust-mode rustic-mode))
-    (if (fboundp 'lsp-format-buffer)
-      (lsp-format-buffer))))
+;; flycheck can be used in place of, or in tandem with, emacs-lsp.
+;; That said, if there is already an LSP server installed and useable for a
+;; certain file type, it may already have flycheck integration and/or you may
+;; just not want flycheck checking in addition to the LSP.
+;;
+;; A list of useful commands to have installed to enable flycheck:
+;; - C/C++: http://cppcheck.sourceforge.net/
+;; - Dockerfiles: https://github.com/hadolint/hadolint
+;; - Markdown: https://github.com/markdownlint/markdownlint/
+;; - Prose (text, Markdown): https://github.com/amperser/proselint/
+;; - RPM spec files: https://sourceforge.net/projects/rpmlint/
+;; - Shell scripts:
+;;   - shfmt: https://github.com/mvdan/sh
+;;   - https://github.com/koalaman/shellcheck/
+(use-package flycheck
+  :hook (flycheck-mode . my/disable-checkdoc-in-init-files)
+  :init (global-flycheck-mode))
 
 ;; Client/library for the Language Server Protocol
 ;; https://emacs-lsp.github.io/lsp-mode/
@@ -677,6 +976,8 @@ If FRAME is omitted or nil, use currently selected frame."
 (use-package lsp-mode
   :custom
   (lsp-auto-guess-root t)
+  (lsp-eldoc-render-all nil)
+  (lsp-idle-delay 0.6)
   (lsp-keep-workspace-alive nil)
   (lsp-response-timeout 2)
   (lsp-signature-render-documentation nil)
@@ -685,9 +986,14 @@ If FRAME is omitted or nil, use currently selected frame."
 
   (lsp-pyls-configuration-sources ["flake8" "pycodestyle"])
 
-  (lsp-rust-server 'rust-analyzer)
   (lsp-rust-analyzer-cargo-watch-command "clippy")
   (lsp-rust-analyzer-diagnostics-enable-experimental nil)
+  (lsp-rust-analyzer-display-chaining-hints t)
+  (lsp-rust-analyzer-display-closure-return-type-hints t)
+  (lsp-rust-analyzer-import-enforce-granularity t)
+  (lsp-rust-analyzer-import-granularity "module")
+  (lsp-rust-analyzer-import-group t)
+  (lsp-rust-server 'rust-analyzer)
 
   :bind
   ("<f2>" . lsp-rename)
@@ -695,11 +1001,10 @@ If FRAME is omitted or nil, use currently selected frame."
   ("M-<f12>" . lsp-ui-peek-find-references)
   ("s-<f12>" . lsp-find-definition)
 
+  :commands (lsp lsp-deferred)
+
   :hook
-  ((c-mode c++-mode clojure-mode clojurec-mode clojurescript-mode
-     go-mode groovy-mode python-mode rjsx-mode ruby-mode
-     rust-mode rustic-mode web-mode) . lsp)
-  (before-save . my/lsp-format))
+  (lsp-mode . lsp-enable-which-key-integration))
 
 ;; UI integrations for lsp-mode
 ;; https://emacs-lsp.github.io/lsp-ui/
@@ -731,94 +1036,62 @@ If FRAME is omitted or nil, use currently selected frame."
     (global-set-key
       (kbd (concat "<" loc "> <mouse-movement>")) #'ignore)))
 
+;; Rust support
+;; https://github.com/brotzeit/rustic
+(use-package rustic
+  :requires lsp-mode
+  :config
+  (setq rustic-format-on-save nil
+    rustic-lsp-server 'rust-analyzer)
+  :hook ((rust-mode rustic-mode) . lsp-deferred))
+
+;; Better Rust/Cargo support for Flycheck
+;; https://github.com/flycheck/flycheck-rust
+(use-package flycheck-rust
+  :after (flycheck rustic-mode) ; we :hook so this is okay
+  :hook (flycheck-mode . flycheck-rust-setup))
+
 ;; Java LSP integration
 ;; https://emacs-lsp.github.io/lsp-java/
 (use-package lsp-java
-  :requires lsp
+  :requires lsp-mode
   :hook java . 'lsp)
 
-
-;; A tree layout file explorer for Emacs
-;; https://github.com/Alexander-Miller/treemacs/
-(use-package treemacs
-  :defer t
-  :custom
-  (treemacs-project-follow-cleanup t)
-  (treemacs-project-follow-mode t)
-  :config
-  (treemacs-resize-icons 16))
-
-;; Evil mode integration for treemacs
-;; https://github.com/Alexander-Miller/treemacs/blob/master/src/extra/treemacs-evil.el
-(eval-and-compile (require 'treemacs-interface nil t))
-(use-package treemacs-evil
-  :config
-  (define-key evil-treemacs-state-map (kbd "TAB") #'treemacs-TAB-action))
-
-
-;; Integration for treemode and lsp-mode
-;; https://github.com/emacs-lsp/lsp-treemacs
-(use-package lsp-treemacs
-  :after (treemacs lsp-mode)
-  :config
-  (lsp-treemacs-sync-mode 1)
-  :bind
-  (:map global-map
-    ("<f11>" . lsp-treemacs-errors-list)))
-
-
-;; A modern, on-the-fly syntac checking extension.
-;; https://www.flycheck.org/en/latest/
-;;
-;; flycheck can be used in place of, or in tandem with, emacs-lsp.
-;; That said, if there is already an LSP server installed and useable for a
-;; certain file type, it may already have flycheck integration and/or you may
-;; just not want flycheck checking in addition to the LSP.
-;;
-;; A list of useful commands to have installed to enable flycheck:
-;; - C/C++: http://cppcheck.sourceforge.net/
-;; - Dockerfiles: https://github.com/hadolint/hadolint
-;; - Markdown: https://github.com/markdownlint/markdownlint/
-;; - Prose (text, Markdown): https://github.com/amperser/proselint/
-;; - RPM spec files: https://sourceforge.net/projects/rpmlint/
-;; - Shell scripts:
-;;   - shfmt: https://github.com/mvdan/sh
-;;   - https://github.com/koalaman/shellcheck/
-(use-package flycheck
-  :ensure t
-  :init (global-flycheck-mode))
-
 (use-package flycheck-golangci-lint
-  :ensure t
   :config
   (add-to-list 'flycheck-checkers 'golangci-lint))
+
+(use-package ruby-mode
+  :ensure nil
+  :custom (ruby-indent-level 2)
+  :hook (ruby-mode . lsp-deferred))
 
 ;; (use-package lsp-pyright
 ;;   :hook (python-mode . (lambda ()
 ;;                          (require 'lsp-pyright)
 ;;                          (lsp))))
 
+(use-package python-mode
+  :ensure nil
+  :hook (python-mode . lsp-deferred))
+
 (use-package python-isort
   :hook (python-mode . python-isort-on-save-mode))
-
 
 (use-package blacken
   :hook (python-mode . blacken-mode))
 
-
 (use-package poetry
   :hook (python-mode . poetry-tracking-mode))
 
-
 ;; A groovy major mode, grails minor mode, and a groovy inferior mode.
 ;; https://github.com/Groovy-Emacs-Modes/groovy-emacs-modes
-(use-package groovy-mode)
-
+(use-package groovy-mode
+  :hook (groovy-mode . lsp-deferred))
 
 ;; Extends the builtin js-mode to add better syntax highlighting for JSON
 ;; https://github.com/joshwnj/json-mode
 (use-package json-mode)
-
 
 ;; Mode for the Go programming language
 ;; https://github.com/dominikh/go-mode.el
@@ -828,29 +1101,26 @@ If FRAME is omitted or nil, use currently selected frame."
   (setq gofmt-command "golines")
   ;; (setq gofmt-args '("--tab-len=8" "--reformat-tags" "--max-len=9999"))
   (setq gofmt-args '("--tab-len=8" "--max-len=9999"))
-  :hook (before-save . gofmt-before-save))
-
+  :hook
+  ((go-mode . lsp-deferred)
+    (before-save . gofmt-before-save)))
 
 ;; Syntax highlighting for .vimrc/_vimrc files
 ;; https://github.com/mcandre/vimrc-mode
 (use-package vimrc-mode)
 
-
 ;; https://melpa.org/#/protobuf-mode
 (use-package protobuf-mode)
-
 
 ;; Highlight TODO keywords
 ;; https://github.com/tarsius/hl-todo
 (use-package hl-todo
   :config (global-hl-todo-mode))
 
-
 ;; Advanced, type aware, highlight support for CMake
 ;; https://github.com/Lindydancer/cmake-font-lock/
 (use-package cmake-font-lock
   :hook (cmake-mode .))
-
 
 ;; PlatformIO integration
 ;; https://github.com/ZachMassia/PlatformIO-Mode/
@@ -858,50 +1128,8 @@ If FRAME is omitted or nil, use currently selected frame."
   :requires projectile
   :hook ((c-mode c++-mode) . platformio-conditionally-enable))
 
-
 ;; Arduino project files are just C++, really
 (add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
-
-
-;; Adds LatexMk support to AUCTeX.
-;; https://github.com/tom-tan/auctex-latexmk
-(use-package auctex-latexmk
-  :requires auctex)
-
-
-;; Only required here so that "reftex-plug-into-AUCTex" isn't seen as a free variable down below
-(eval-and-compile (require 'reftex))
-
-;; LaTeX support
-;; https://www.gnu.org/software/emacs/manual/html_node/emacs/TeX-Mode.html
-(use-package latex
-  :ensure nil
-  :defer 1
-  :requires (auctex auctex-latexmk reftex)
-
-  :init
-  (setq TeX-auto-save t)
-  (setq TeX-parse-self t)
-  (setq-default TeX-master nil)
-  (setq reftex-plug-into-AUCTeX t)
-  (setq TeX-PDF-mode t)
-
-  :config
-  (auctex-latexmk-setup)
-
-  :hook
-  (LaTeX-mode . company-auctex-init)
-  (LaTeX-mode . LaTeX-math-mode)
-  (LaTeX-mode . turn-on-reftex)
-  (TeX-mode . (lambda () (setq TeX-command-default "latexmk"))))
-
-(add-hook 'LaTeX-mode-hook
-  (lambda ()
-    (push
-      '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
-         :help "Run latexmk on file")
-      TeX-command-list)))
-
 
 ;; ParEdit helps keep parentheses balanced.
 ;; https://www.emacswiki.org/emacs/ParEdit
@@ -909,11 +1137,12 @@ If FRAME is omitted or nil, use currently selected frame."
 (use-package paredit
   :hook ((clojure-mode lisp-mode emacs-lisp-mode) . paredit-mode))
 
-
 ;; https://github.com/Fuco1/smartparens
+;; TODO: configure this for more modes, maybe: double-quote would be nice to have, for instance
 (use-package smartparens
+  :config
+  (require 'smartparens-config)
   :hook (paredit-mode . smartparens-mode))
-
 
 ;; https://github.com/emacs-evil/evil-cleverparens
 (use-package evil-cleverparens
@@ -921,12 +1150,10 @@ If FRAME is omitted or nil, use currently selected frame."
   :config (setq evil-cleverparens-complete-parens-in-yanked-region t)
   :hook (paredit-mode . evil-cleverparens-mode))
 
-
 ;; Highlights delimiters such as parentheses, brackets or braces according to their depth.
 ;; https://github.com/Fanael/rainbow-delimiters/
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
-
 
 ;; CIDER is the Clojure(Script) Interactive Development Environment that Rocks
 ;; https://docs.cider.mx
@@ -934,26 +1161,21 @@ If FRAME is omitted or nil, use currently selected frame."
   :config (setq cider-repl-display-help-banner nil)
   :requires clojure-mode)
 
-
 ;; Support for the Clojure(Script) programming language
 ;; https://github.com/clojure-emacs/clojure-mode
 (use-package clojure-mode
-  :requires rainbox-delimiters)
-
+  :hook ((clojure-mode clojurec-mode clojurescript-mode) . lsp-deferred))
 
 ;; Mode for handling Dockerfiles
 ;; https://github.com/spotify/dockerfile-mode
 (use-package dockerfile-mode
   :mode "Dockerfile.*\\'")
 
-
+;; Major mode of Terraform configuration file
+;; (requires hcl-mode, so we get that one for free)
+;; https://github.com/emacsorphanage/terraform-mode
 (use-package terraform-mode
   :hook (terraform-mode . terraform-format-on-save-mode))
-
-;; Discover key bindings and their meaning for the current Emacs major mode
-;; https://github.com/jguenther/discover-my-major
-(use-package discover-my-major)
-
 
 ;; Mode for editing Markdown-formatted text
 ;; https://jblevins.org/projects/markdown-mode/
@@ -965,7 +1187,6 @@ If FRAME is omitted or nil, use currently selected frame."
           ("\\.md\\'" . markdown-mode)
           ("\\.markdown\\'" . markdown-mode)))
 
-
 ;; Major mode for editing YAML files
 ;; https://github.com/yoshiki/yaml-mode
 (use-package yaml-mode)
@@ -974,103 +1195,6 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; https://github.com/magit/magit
 (use-package magit
   :bind ("C-c g" . magit-file-dispatch))
-
-
-;; Perspective
-(use-package perspective
-  :requires (projectile consult)
-  :bind
-  ;; ("C-x C-b" . persp-list-buffers)
-  ;; ("C-x b" . persp-switch-to-buffer*)
-  ;; ("C-x k" . persp-kill-buffer*)
-  :config
-  (setq persp-state-default-file (expand-file-name "perspective.state" user-emacs-directory))
-  (consult-customize consult--source-buffer :hidden t :default nil)
-  (add-to-list 'consult-buffer-sources persp-consult-source)
-  :custom (persp-mode-prefix-key (kbd "C-c C-p"))
-  :hook (kill-emacs . persp-state-save)
-  :init
-  (persp-mode))
-
-(use-package persp-projectile
-  :requires (perspective projectile)
-  :bind (:map projectile-mode-map ("C-c p p" . 'projectile-persp-switch-project)))
-
-;; Themes
-
-;; decent built-in theme
-;; (load-theme 'tsdh-light t)
-
-(use-package color-theme-sanityinc-tomorrow)
-;; (load-theme 'sanityinc-tomorrow-day t)
-
-(use-package color-theme-sanityinc-solarized)
-(load-theme 'sanityinc-solarized-light t)
-
-
-;;(use-package command-log-mode)
-
-;; Put icons in various places to spruce this place up a bit.
-;; https://github.com/domtronn/all-the-icons.el
-(use-package all-the-icons)
-
-;; https://github.com/jtbm37/all-the-icons-dired
-(use-package all-the-icons-dired
-  :requires all-the-icons
-  :hook (dired-mode . all-the-icons-dired-mode))
-
-;; doom-modeline is a modeline taken from the Doom Emacs project.
-;; https://github.com/seagle0128/doom-modeline
-(use-package doom-modeline
-  :after all-the-icons
-  :custom
-  (doom-modeline-buffer-file-name-style 'relative-from-project)
-  (doom-modeline-indent-info t)
-  (doom-modeline-minor-modes t)
-  :hook (after-init . doom-modeline-mode))
-
-(defun enable-doom-icons ()
-  "Enable icons in the modeline only for graphical frames."
-  (setq doom-modeline-icon (display-graphic-p)))
-
-(defun setup-frame-doom (frame)
-  "Enable icons in the modeline only if FRAME is a graphical frame."
-  (with-selected-frame frame
-    (enable-doom-icons)))
-
-(add-hook 'after-make-frame-functions #'setup-frame-doom)
-
-
-(require 'tab-line)
-(defun sorted-buffers-list ()
-  "Return buffer list sorted by name."
-  (sort (tab-line-tabs-buffer-list)
-    #'(lambda (first second)
-        (string<
-          (buffer-name first)
-          (buffer-name second)))))
-
-(defun my/tab-line-tabs-function ()
-  "My tabs line function."
-  (seq-filter
-    (apply-partially
-      (lambda (buffer)
-        (let ((bufname (buffer-name buffer)))
-          (cond
-            ((string-equal bufname (buffer-name (current-buffer))) buffer)
-            ((string-prefix-p "*vterm" bufname) buffer)
-            ((string-equal "*scratch*" bufname) buffer)
-            ((not (or
-                    (string-search ":" bufname)
-                    (string-prefix-p "*" bufname))) buffer)))))
-    (sorted-buffers-list)))
-
-(use-package tab-line
-  :config (setq tab-line-tabs-function 'my/tab-line-tabs-function)
-  :custom (global-tab-line-mode)
-  :bind
-  ("s-}" . tab-line-switch-to-next-tab)
-  ("s-{" . tab-line-switch-to-prev-tab))
 
 ;; A Common Lisp REPL
 ;; https://github.com/joaotavora/sly
@@ -1089,63 +1213,17 @@ If FRAME is omitted or nil, use currently selected frame."
     (setq inferior-lisp-program "ros -Q run"))
   (message "Roswell helper not found; is it installed?"))
 
-
 ;; Quicklisp support for SLY
 ;; https://github.com/joaotavora/sly-quicklisp
-(use-package sly-quicklisp :after sly)
-
+(use-package sly-quicklisp
+  :requires sly)
 
 ;; ASDF contrib for SLY
 ;; https://github.com/mmgeorge/sly-asdf
-(use-package sly-asdf :after sly)
-
-
-;; A better Emacs *help* buffer.
-;; https://github.com/Wilfred/helpful
-(use-package helpful
-  :bind
-  ("C-h f" . helpful-callable)
-  ("C-h v" . helpful-variable)
-  ("C-h k" . helpful-key)
-  ("C-h K" . helpful-kill-buffers)
-  ("C-c C-d" . helpful-at-point))
-
-
-;; Wakatime - automatic time tracking and metrics generated from your
-;; programming activity
-(use-package wakatime-mode
-  :config (setq wakatime-cli-path (expand-file-name "~/.wakatime/wakatime-cli"))
-  :hook(after-init . global-wakatime-mode))
-
-
-;; Org mode
-(use-package toc-org
-  :hook (org-mode . toc-org-mode))
-
-(defun my/org-mode-setup ()
-  "Set up Org mode."
-  (if (fboundp 'org-indent-mode)
-    (org-indent-mode))
-  (variable-pitch-mode 1))
-;;(visual-line-mode 1)
-
-
-(use-package org
-  :hook (org-mode . my/org-mode-setup)
-  :config
-  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
-  (set-face-attribute 'org-table nil :inherit 'fixed-pitch)
-  (set-face-attribute 'org-formula nil :inherit 'fixed-pitch)
-  (set-face-attribute 'org-code nil :inherit '(shadow fixed-pitch))
-  ;; (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
-  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
-
+(use-package sly-asdf :requires sly)
 
 (defun my/web-mode-hook ()
   "Hooks for web mode."
-  (eval-and-compile (require 'web-mode))
   (setq web-mode-enable-engine-detection t)
   (setq web-mode-markup-indent-offset 4))
 
@@ -1155,52 +1233,34 @@ If FRAME is omitted or nil, use currently selected frame."
   ("\\.css\\'" . web-mode)
   ("\\.ts[x]?\\'" . web-mode)
   :hook
-  (web-mode . my/web-mode-hook))
+  ((web-mode . my/web-mode-hook)
+    (web-mode . lsp-deferred)))
 
 (use-package rjsx-mode
   :mode ("\\.js[x]?\\'" . rjsx-mode)
   :custom
-  (js2-strict-missing-semi-warning nil))
+  (js2-strict-missing-semi-warning nil)
+  :hook (rjsx-mode . lsp-deferred))
 
-(defvar electrify-return-match
-  "[\]}\)\"]"
-  "If this regexp matches the text after the cursor, do an \"electric\" return.")
+;; Emacs port of GitGutter which is Sublime Text Plugin
+;; https://github.com/emacsorphanage/git-gutter
+;; git-gutter and git-gutter-fringe config taken from https://ianyepan.github.io/posts/emacs-git-gutter/
+(use-package git-gutter
+  :config
+  (setq git-gutter:update-interval 0.1)
+  (global-git-gutter-mode +1))
 
-(defun electrify-return-if-match (arg)
-  "TODO ARG."
-  (interactive "P")
-  (let ((case-fold-search nil))
-    (if (looking-at electrify-return-match)
-      (save-excursion (newline-and-indent)))
-    (newline arg)
-    (indent-according-to-mode)))
+;; Fringe version of git-gutter.el
+;; https://github.com/emacsorphanage/git-gutter-fringe
+(use-package git-gutter-fringe
+  :config
+  (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+  (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+  (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 
-(global-set-key (kbd "RET") 'electrify-return-if-match)
-
-
-;; Make the Emacs GUI frame arguably prettier on macOS
-(when (string-equal system-type "darwin")
-  (add-to-list 'default-frame-alist'(ns-transparent-titlebar . t))
-  (add-to-list 'default-frame-alist'(ns-appearance . light)))
-
-
-;; trackpad / mouse wheel scrolls buffer
-(global-set-key [mouse-4] 'scroll-down-line)
-(global-set-key [mouse-5] 'scroll-up-line)
-
-
-(defun my/compile-after-save ()
-  "Byte-Compiles the Emacs Lisp file in the current buffer.
-Only happens if a compiled version already exists."
-  (add-hook 'after-save-hook
-    (lambda ()
-      (if (file-exists-p (concat buffer-file-name "c"))
-        (emacs-lisp-byte-compile)))
-
-    nil
-    t))
-
-(add-hook 'emacs-lisp-mode-hook 'my/compile-after-save)
+;; An Emacs mode for editing and running Microsoft PowerShell code.
+;; https://github.com/jschaf/powershell.el
+(use-package powershell)
 
 (provide 'init)
 ;;; init.el ends here
