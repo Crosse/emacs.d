@@ -1,0 +1,3 @@
+[submodule "site-lisp/copilot.el"]
+	path = site-lisp/copilot.el
+	url = git@github.com:copilot-emacs/copilot.el.git

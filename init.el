@@ -23,7 +23,9 @@
 (let ((default-directory (expand-file-name "site-lisp" user-emacs-directory)))
   (add-to-list 'load-path default-directory)
   (normal-top-level-add-to-load-path '("."))
-  (normal-top-level-add-subdirs-to-load-path))
+  (normal-top-level-add-subdirs-to-load-path)
+  (delete-dups load-path))
+
 
 ;; Add MELPA to the package archives
 (require 'package)
@@ -229,6 +231,11 @@ If FRAME is omitted or nil, use currently selected frame."
   (dolist (var '("SSH_AUTH_SOCK" "LANG" "LC_CTYPE"))
     (add-to-list 'exec-path-from-shell-variables var))
   (exec-path-from-shell-initialize))
+
+(use-package treesit
+  :ensure nil
+  :config
+  (setq treesit-extra-load-path "/opt/pkg/lib")) ;; for pkgsrc on macOS
 
 ;; Project Interaction Library for Emacs
 ;; https://github.com/bbatsov/projectile
@@ -1222,19 +1229,19 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; https://github.com/mmgeorge/sly-asdf
 (use-package sly-asdf :requires sly)
 
-(defun my/web-mode-hook ()
-  "Hooks for web mode."
-  (setq web-mode-enable-engine-detection t)
-  (setq web-mode-markup-indent-offset 4))
-
 (use-package web-mode
   :mode
   ("\\.htm[l]?\\'" . web-mode)
   ("\\.css\\'" . web-mode)
   ("\\.ts[x]?\\'" . web-mode)
-  :hook
-  ((web-mode . my/web-mode-hook)
-    (web-mode . lsp-deferred)))
+  :custom
+  (web-mode-enable-auto-quoting nil)
+  (web-mode-css-indent 2)
+  (web-mode-attr-indent 2)
+  (web-mode-code-indent 2)
+  (web-mode-markup-indent 2)
+  (web-mode-attr-value-indent 2)
+  (web-mode-markup-comment-indent 2))
 
 (use-package rjsx-mode
   :mode ("\\.js[x]?\\'" . rjsx-mode)
@@ -1261,6 +1268,12 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; An Emacs mode for editing and running Microsoft PowerShell code.
 ;; https://github.com/jschaf/powershell.el
 (use-package powershell)
+
+(use-package copilot
+  :ensure nil
+  :config
+  (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+  (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
 
 (provide 'init)
 ;;; init.el ends here
