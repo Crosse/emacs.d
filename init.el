@@ -252,7 +252,7 @@ If FRAME is omitted or nil, use currently selected frame."
   (setq projectile-globally-ignored-directories
     (append projectile-globally-ignored-directories '("target" "build" ".elixir_ls" "vendor")))
   (setq projectile-project-search-path
-    '(("~/code/mine" . 1) ("~/code/mine/lisp . 1") ("~/code/dotfiles" . 0) ("~/code/lantern" . 1)))
+    '(("~/code/mine" . 1) ("~/code/mine/lisp . 1") ("~/code/dotfiles" . 0) ("~/code/work" . 1)))
 
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
