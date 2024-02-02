@@ -17,7 +17,7 @@
 ;; set a higher GC during startup
 (setq gc-cons-threshold (* 50 1000 1000))
 ;; ...but set it much lower afterwards so that GC pauses aren't as significant.
-(add-hook 'after-init-hook (lambda () (setq gc-cons-threshold (* 8 1000 1000))))
+(add-hook 'after-init-hook (lambda () (setq gc-cons-threshold (* 16 1000 1000))))
 
 ;; For packages that aren't in [M]ELPA, copy or git clone them into ~/.emacs.d/site-lisp.
 (let ((default-directory (expand-file-name "site-lisp" user-emacs-directory)))
