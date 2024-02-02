@@ -854,7 +854,10 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; Wakatime - automatic time tracking and metrics generated from your
 ;; programming activity
 (use-package wakatime-mode
-  :config (setq wakatime-cli-path (expand-file-name "~/.wakatime/wakatime-cli"))
+  :config
+  (setq
+    wakatime-cli-path (expand-file-name "~/.wakatime/wakatime-cli")
+    wakatime-api-key (auth-source-pick-first-password :host "wakatime.com"))
   :hook (after-init . global-wakatime-mode))
 
 (use-package rainbow-mode
