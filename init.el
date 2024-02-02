@@ -991,7 +991,7 @@ If FRAME is omitted or nil, use currently selected frame."
   (lsp-eldoc-render-all nil)
   (lsp-idle-delay 0.6)
   (lsp-keep-workspace-alive nil)
-  (lsp-response-timeout 2)
+  (lsp-response-timeout 20)
   (lsp-signature-render-documentation nil)
 
   (read-process-output-max (* 2 1024 1024))
