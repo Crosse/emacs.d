@@ -16,3 +16,5 @@ transient/
 undo/
 url/
 perspective.state
+/eln-cache/
+/var/
