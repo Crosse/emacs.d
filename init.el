@@ -392,7 +392,9 @@ If FRAME is omitted or nil, use currently selected frame."
   (setq company-global-modes '(not comint-mode
                                 eshell-mode
                                 help-mode
-                                message-mode)
+                                message-mode
+                                fundamental-mode
+                                conf-mode)
     company-idle-delay 0.1
     company-minimum-prefix-length 1
     company-tooltip-align-annotations t)
