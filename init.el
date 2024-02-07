@@ -36,6 +36,9 @@
 (unless package-archive-contents
   (package-refresh-contents))
 
+;; Consider built-in packages when installing/upgrading
+(customize-set-variable 'package-install-upgrade-built-in t)
+
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
@@ -1291,6 +1294,12 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; required dependencies for copilot.el (also 'editorconfig', but we load that up above)
 (use-package dash)
 (use-package s)
+
+;; jsonrpc is a built-in package, and use-package really doesn't want to upgrade it to the version
+;; in ELPA. The hack here is to specify a minimum version requirement, and then force-install if
+;; it's not met.
+(unless (package-installed-p 'jsonrpc '(1 0 24))
+  (package-install 'jsonrpc))
 (use-package jsonrpc)
 
 ;; An unofficial Copilot plugin for Emacs.
