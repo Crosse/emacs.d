@@ -325,6 +325,13 @@ If FRAME is omitted or nil, use currently selected frame."
   (advice-add 'evil-collection-set-readonly-bindings :after #'my/remap-quit-window) ; must be before init!
   (evil-collection-init))
 
+(with-eval-after-load 'evil-collection
+  (evil-collection-define-key 'normal 'view-mode-map
+    "+" nil
+    "=" nil
+    "0" nil
+    "-" nil))
+
 
 ;; Displays a visual hint on evil edit operations
 ;; https://github.com/edkolev/evil-goggles
