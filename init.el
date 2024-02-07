@@ -596,23 +596,41 @@ If FRAME is omitted or nil, use currently selected frame."
   :config
   (treemacs-resize-icons 16))
 
+(use-package treemacs-projectile
+  :after (treemacs projectile))
+(use-package treemacs-perspective
+  :after (treemacs perspective))
+(use-package treemacs-magit
+  :after (treemacs magic))
+
 ;; Evil mode integration for treemacs
 ;; https://github.com/Alexander-Miller/treemacs/blob/master/src/extra/treemacs-evil.el
 (eval-and-compile (require 'treemacs-interface nil t))
 (use-package treemacs-evil
   :config
-  (define-key evil-treemacs-state-map (kbd "TAB") #'treemacs-TAB-action))
+  :bind (:map evil-treemacs-state-map "TAB" . #'treemacs-TAB-action))
 
+
+(defun my/lsp-treemacs-errors-list-toggle ()
+  "Toggle the LSP errors list in treemacs."
+  (interactive)
+  (let* ((lsp-buffer-name "*LSP Error List*")
+          (lsp-buffer (get-buffer-window lsp-buffer-name)))
+    (if (eq lsp-buffer (selected-window))
+      (kill-buffer lsp-buffer-name)
+      (progn
+        (lsp-treemacs-errors-list)
+        (solaire-mode)))))
 
 ;; Integration for treemode and lsp-mode
 ;; https://github.com/emacs-lsp/lsp-treemacs
 (use-package lsp-treemacs
-  :after (treemacs lsp-mode) ; we :bind so this is okay
+  :after (treemacs lsp-mode)            ; we :bind so this is okay
   :config
   (lsp-treemacs-sync-mode 1)
   :bind
   (:map global-map
-    ("<f11>" . lsp-treemacs-errors-list)))
+    ("<f11>" . my/lsp-treemacs-errors-list-toggle)))
 
 
 ;; LaTeX support
