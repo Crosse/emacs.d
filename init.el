@@ -20,7 +20,7 @@
 (add-hook 'after-init-hook (lambda () (setq gc-cons-threshold (* 16 1000 1000))))
 
 ;; For packages that aren't in [M]ELPA, copy or git clone them into ~/.emacs.d/site-lisp.
-(let ((default-directory (expand-file-name "site-lisp" user-emacs-directory)))
+(let ((default-directory (expand-file-name "~/.emacs.d/site-lisp")))
   (add-to-list 'load-path default-directory)
   (normal-top-level-add-to-load-path '("."))
   (normal-top-level-add-subdirs-to-load-path)
