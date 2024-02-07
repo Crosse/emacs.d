@@ -773,20 +773,6 @@ If FRAME is omitted or nil, use currently selected frame."
   :hook
   (org-mode . (lambda () (org-bullets-mode 1))))
 
-;; Themes
-
-;; decent built-in theme
-;; (load-theme 'tsdh-light t)
-
-;; (use-package color-theme-sanityinc-tomorrow)
-;; (load-theme 'sanityinc-tomorrow-day t)
-
-;; (use-package color-theme-sanityinc-solarized)
-;; (load-theme 'sanityinc-solarized-light t)
-
-;; (use-package darktooth-theme
-;;   :config (load-theme 'darktooth t))
-
 (use-package doom-themes
   :custom
   (doom-themes-enable-bold nil)
@@ -801,14 +787,13 @@ If FRAME is omitted or nil, use currently selected frame."
   :config
   (doom-themes-visual-bell-config)
   (doom-themes-treemacs-config)
-  (doom-themes-org-config)
-  (let
-    ((frame-background-mode 'light))
-    (frame-set-background-mode nil))
+  (doom-themes-org-config))
 
-  (if (display-graphic-p)
-    (load-theme 'doom-solarized-light t)
-    (load-theme 'tsdh-light)))
+(let
+  ((frame-background-mode 'light)
+    (frame-set-background-mode nil))
+  (setq doom-oksolar-light-brighter-comments t)
+  (load-theme 'doom-oksolar-light t))
 
 ;;(use-package command-log-mode)
 
