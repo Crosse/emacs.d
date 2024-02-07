@@ -109,7 +109,6 @@
 (when (fboundp 'tool-bar-mode)
   (tool-bar-mode -1))           ;; Disable the tool bar in the GUI.
 (xterm-mouse-mode)              ;; Enable mouse mode in terminals that support it.
-(which-function-mode 1)         ;; Display the current function name in the mode line.
 
 (customize-set-variable 'vc-follow-symlinks t)     ;; Always follow symlinks.
 (customize-set-variable 'scroll-margin 3)          ;; Make sure there are at least 3 lines above or below the current line on-screen.
@@ -144,6 +143,11 @@
 
 ;; Automatically break long lines at the fill-column.
 (setq-default auto-fill-function 'do-auto-fill)
+
+(use-package which-func
+  :ensure nil
+  :custom (which-func-non-auto-modes '(treemacs-mode))
+  :config (which-function-mode 1))
 
 (defun my/frame-recenter (&optional frame)
   "Center FRAME on the screen.
