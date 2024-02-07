@@ -608,7 +608,7 @@ If FRAME is omitted or nil, use currently selected frame."
 (eval-and-compile (require 'treemacs-interface nil t))
 (use-package treemacs-evil
   :config
-  :bind (:map evil-treemacs-state-map "TAB" . #'treemacs-TAB-action))
+  :bind (:map evil-treemacs-state-map ("TAB" . #'treemacs-TAB-action)))
 
 
 (defun my/lsp-treemacs-errors-list-toggle ()
