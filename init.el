@@ -1303,11 +1303,25 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; https://github.com/jschaf/powershell.el
 (use-package powershell)
 
+;; required dependencies for copilot.el (also 'editorconfig', but we load that up above)
+(use-package dash)
+(use-package s)
+(use-package jsonrpc)
+
+;; An unofficial Copilot plugin for Emacs.
+;; https://github.com/copilot-emacs/copilot.el
 (use-package copilot
   :ensure nil
+  :requires (editorconfig dash s jsonrpc)
   :config
-  (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
-  (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
+  (add-to-list 'copilot-indentation-alist '(elisp-interactive-mode lisp-indent-offset))
+  :custom
+  (copilot-indent-offset-warning-disable t)
+  (copilot-idle-delay 2)
+  :bind (:map copilot-completion-map
+          ("<tab>" . copilot-accept-completion)
+          ("TAB" . copilot-accept-completion))
+  :hook (prog-mode . copilot-mode))
 
 (provide 'init)
 ;;; init.el ends here
