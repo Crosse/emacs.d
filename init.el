@@ -163,57 +163,28 @@ If FRAME is omitted or nil, use currently selected frame."
 
 (defun my/gui-setup ()
   "Set up things in FRAME that only make sense for graphical displays."
-  ;; (set-face-attribute 'default nil :font "SauceCodePro NF-12")
-  (set-face-attribute 'default nil :font "BlexMono NF-12")
-      ;; (set-face-attribute 'default nil :font "Iosevka NF-13")
-
-      ;; (add-hook 'prog-mode-hook #'prettify-symbols-mode)
-
-      ;; ligatures! ...but not right now
-      ;; (let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
-      ;;                 (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
-      ;;                 (36 . ".\\(?:>\\)")
-      ;;                 (37 . ".\\(?:\\(?:%%\\)\\|%\\)")
-      ;;                 (38 . ".\\(?:\\(?:&&\\)\\|&\\)")
-      ;;                 (42 . ".\\(?:\\(?:\\*\\*/\\)\\|\\(?:\\*[*/]\\)\\|[*/>]\\)")
-      ;;                 (43 . ".\\(?:\\(?:\\+\\+\\)\\|[+>]\\)")
-      ;;                 (45 . ".\\(?:\\(?:-[>-]\\|<<\\|>>\\)\\|[<>}~-]\\)")
-      ;;                 (46 . ".\\(?:\\(?:\\.[.<]\\)\\|[.=-]\\)")
-      ;;                 (47 . ".\\(?:\\(?:\\*\\*\\|//\\|==\\)\\|[*/=>]\\)")
-      ;;                 (48 . ".\\(?:x[a-zA-Z]\\)")
-      ;;                 (58 . ".\\(?:::\\|[:=]\\)")
-      ;;                 (59 . ".\\(?:;;\\|;\\)")
-      ;;                 (60 . ".\\(?:\\(?:!--\\)\\|\\(?:~~\\|->\\|\\$>\\|\\*>\\|\\+>\\|--\\|<[<=-]\\|=[<=>]\\||>\\)\\|[*$+~/<=>|-]\\)")
-      ;;                 (61 . ".\\(?:\\(?:/=\\|:=\\|<<\\|=[=>]\\|>>\\)\\|[<=>~]\\)")
-      ;;                 (62 . ".\\(?:\\(?:=>\\|>[=>-]\\)\\|[=>-]\\)")
-      ;;                 (63 . ".\\(?:\\(\\?\\?\\)\\|[:=?]\\)")
-      ;;                 (91 . ".\\(?:]\\)")
-      ;;                 (92 . ".\\(?:\\(?:\\\\\\\\\\)\\|\\\\\\)")
-      ;;                 (94 . ".\\(?:=\\)")
-      ;;                 (119 . ".\\(?:ww\\)")
-      ;;                 (123 . ".\\(?:-\\)")
-      ;;                 (124 . ".\\(?:\\(?:|[=|]\\)\\|[=>|]\\)")
-      ;;                 (126 . ".\\(?:~>\\|~~\\|[>=@~-]\\)")
-      ;;                 )
-      ;;         ))
-      ;;   (dolist (char-regexp alist)
-      ;;     (set-char-table-range composition-function-table (car char-regexp)
-      ;;       `([,(cdr char-regexp) 0 font-shape-gstring]))))
-  )
+  (when (display-graphic-p)
+    ;; (set-face-attribute 'default nil :font "SauceCodePro NF-12")
+    ;; also move the frame into the center of the screen and make it larger.
+    (require 'cl-lib)
+    (let* ((candidates (cl-case system-type
+                                (gnu/linux '("BlexMono Nerd Font Mono" "SauceCodePro Nerd Font Mono"))
+                                (darwin '("BlexMono NF"))))
+           (fonts (cl-remove-if-not #'x-list-fonts candidates)))
+      (when fonts
+        (set-face-attribute 'default nil :font (car fonts) :height 100))) ; height is for NUC only
+    (set-frame-size (selected-frame) 140 62)
+    (my/frame-recenter)))
 
 
 ;; This hook will not run for the initial frame created when starting Emacs.
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
-(add-hook 'after-make-frame-functions #'my/gui-setup)
+;(add-hook 'after-make-frame-functions #'my/gui-setup)
 
 ;; ...so to get around that, just unconditionally call the function when this file is read.
 
 (if (display-graphic-p)
-  (progn
-    (my/gui-setup)
-    ;; also move the frame into the center of the screen and make it larger.
-    (set-frame-size (selected-frame) 140 62)
-    (my/frame-recenter))
+  (my/gui-setup)
   (tooltip-mode nil))
 
 ;; Smooth scrolling...sorta.
