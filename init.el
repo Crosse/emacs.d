@@ -172,9 +172,12 @@ If FRAME is omitted or nil, use currently selected frame."
     (let* ((candidates (cl-case system-type
                                 (gnu/linux '("BlexMono Nerd Font Mono" "SauceCodePro Nerd Font Mono"))
                                 (darwin '("BlexMono NF"))))
-           (fonts (cl-remove-if-not #'x-list-fonts candidates)))
+           (fonts (cl-remove-if-not #'x-list-fonts candidates))
+            (height (cl-case system-type
+                      (gnu/linux 100)
+                      (darwin 140))))
       (when fonts
-        (set-face-attribute 'default nil :font (car fonts) :height 100))) ; height is for NUC only
+        (set-face-attribute 'default nil :font (car fonts) :height height)))
     (set-frame-size (selected-frame) 140 62)
     (my/frame-recenter)))
 
