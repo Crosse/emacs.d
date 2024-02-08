@@ -37,7 +37,9 @@
   (package-refresh-contents))
 
 ;; Consider built-in packages when installing/upgrading
-(customize-set-variable 'package-install-upgrade-built-in t)
+;; This became a thing in Emacs 29.1
+(unless (version< emacs-version "29.1")
+  (customize-set-variable 'package-install-upgrade-built-in t))
 
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
@@ -1276,6 +1278,7 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; An unofficial Copilot plugin for Emacs.
 ;; https://github.com/copilot-emacs/copilot.el
 (use-package copilot
+  :if (not (version-list-< (pkg-info-library-version 'jsonrpc) '(1 0 24)))
   :ensure nil
   :requires (editorconfig dash s jsonrpc)
   :config
