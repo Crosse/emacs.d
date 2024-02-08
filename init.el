@@ -26,6 +26,8 @@
   (normal-top-level-add-subdirs-to-load-path)
   (delete-dups load-path))
 
+(load (expand-file-name "~/.emacs.d/init.d/host-config.el"))
+(require 'host-config)
 
 ;; Add MELPA to the package archives
 (require 'package)
@@ -129,7 +131,7 @@
 ;; https://github.com/nex3/perspective-el#some-musings-on-emacs-window-layouts
 ;; ...but customized from there
 (customize-set-variable 'display-buffer-base-action
-  '((display-buffer-reuse-window display-buffer-at-bottom display-buffer-same-window)
+  '((display-buffer-reuse-window display-buffer-in-side-window display-buffer-same-window)
      (reusable-frames . t)))
 (customize-set-variable 'even-window-sizes nil)
 
@@ -169,15 +171,9 @@ If FRAME is omitted or nil, use currently selected frame."
     ;; (set-face-attribute 'default nil :font "SauceCodePro NF-12")
     ;; also move the frame into the center of the screen and make it larger.
     (require 'cl-lib)
-    (let* ((candidates (cl-case system-type
-                                (gnu/linux '("BlexMono Nerd Font Mono" "SauceCodePro Nerd Font Mono"))
-                                (darwin '("BlexMono NF"))))
-           (fonts (cl-remove-if-not #'x-list-fonts candidates))
-            (height (cl-case system-type
-                      (gnu/linux 100)
-                      (darwin 140))))
+    (let ((fonts (get-config 'ui-font)))
       (when fonts
-        (set-face-attribute 'default nil :font (car fonts) :height height)))
+        (set-face-attribute 'default nil :font (car fonts) :height (get-config 'ui-height))))
     (set-frame-size (selected-frame) 140 62)
     (my/frame-recenter)))
 
@@ -772,7 +768,7 @@ If FRAME is omitted or nil, use currently selected frame."
   ((frame-background-mode 'light)
     (frame-set-background-mode nil))
   (setq doom-oksolar-light-brighter-comments t)
-  (load-theme 'doom-oksolar-light t))
+  (load-theme (get-config 'ui-theme) t))
 
 ;;(use-package command-log-mode)
 
