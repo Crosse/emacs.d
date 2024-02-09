@@ -1,8 +1,7 @@
-;; host-config.el -- host-specific configuration
+;; host-config.el -- host-specific configuration -*- lexical-binding t -*-
 ;;; Commentary:
 
 ;;; Code:
-(require 'cl-lib)
 (require 'eieio)
 
 (defclass host-config ()
