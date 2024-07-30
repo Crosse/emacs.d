@@ -214,7 +214,8 @@ If FRAME is omitted or nil, use currently selected frame."
 (use-package treesit
   :ensure nil
   :config
-  (setq treesit-extra-load-path "/opt/pkg/lib")) ;; for pkgsrc on macOS
+  (when (string-equal system-type "darwin")
+    (setq treesit-extra-load-path "/opt/pkg/lib"))) ;; for pkgsrc on macOS
 
 ;; Project Interaction Library for Emacs
 ;; https://github.com/bbatsov/projectile
@@ -1202,6 +1203,8 @@ If FRAME is omitted or nil, use currently selected frame."
           ("\\.md\\'" . markdown-mode)
           ("\\.markdown\\'" . markdown-mode)))
 
+(use-package systemd)
+
 ;; Major mode for editing YAML files
 ;; https://github.com/yoshiki/yaml-mode
 (use-package yaml-mode)
@@ -1209,6 +1212,7 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; It's Magit! A Git Porcelain inside Emacs.
 ;; https://github.com/magit/magit
 (use-package magit
+  :custom (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   :bind ("C-c g" . magit-file-dispatch))
 
 ;; A Common Lisp REPL
