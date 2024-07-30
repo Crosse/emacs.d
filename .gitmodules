@@ -1,3 +1,6 @@
 [submodule "site-lisp/copilot.el"]
 	path = site-lisp/copilot.el
 	url = git@github.com:copilot-emacs/copilot.el.git
+[submodule "site-lisp/codeium.el"]
+	path = site-lisp/codeium.el
+	url = git@github.com:Exafunction/codeium.el.git

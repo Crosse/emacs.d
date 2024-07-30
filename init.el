@@ -1277,32 +1277,27 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; https://github.com/jschaf/powershell.el
 (use-package powershell)
 
-;; required dependencies for copilot.el (also 'editorconfig', but we load that up above)
-(use-package dash)
-(use-package s)
-
-;; jsonrpc is a built-in package, and use-package really doesn't want to upgrade it to the version
-;; in ELPA. The hack here is to specify a minimum version requirement, and then force-install if
-;; it's not met.
-(unless (package-installed-p 'jsonrpc '(1 0 24))
-  (package-install 'jsonrpc))
-(use-package jsonrpc)
-
-;; An unofficial Copilot plugin for Emacs.
-;; https://github.com/copilot-emacs/copilot.el
-(use-package copilot
-  :if (not (version-list-< (pkg-info-library-version 'jsonrpc) '(1 0 24)))
+(use-package codeium
   :ensure nil
-  :requires (editorconfig dash s jsonrpc)
+  :init
+  (add-to-list 'completion-at-point-functions #'codeium-completion-at-point)
   :config
-  (add-to-list 'copilot-indentation-alist '(elisp-interactive-mode lisp-indent-offset))
-  :custom
-  (copilot-indent-offset-warning-disable t)
-  (copilot-idle-delay 2)
-  :bind (:map copilot-completion-map
-          ("<tab>" . copilot-accept-completion)
-          ("TAB" . copilot-accept-completion))
-  :hook (prog-mode . copilot-mode))
+  (setq use-dialog-box nil)
+  (setq codeium-mode-line-enable
+    (lambda (api) (not (memq api '(CancelRequest Heartbeat AutoCompletion)))))
+  (add-to-list 'mode-line-format '(:eval (car-safe codeium-mode-line)) t)
+  (setq codeium-api-enabled
+    (lambda (api)
+      (memq api '(GetCompletions Heartbeat CancelRequest GetAuthToken RegisterUser auth-redirect AcceptCompletion))))
+  (defun my-codeium/document/text ()
+    (buffer-substring-no-properties (max (- (point) 3000) (point-min)) (min (+ (point) 1000) (point-max))))
+  (defun my-codeium/document/cursor_offset ()
+    (codeium-utf8-byte-length
+      (buffer-substring-no-properties (max (- (point) 3000) (point-min)) (point))))
+  (setq codeium/document/text 'my-codeium/document/text)
+  (setq codeium/document/cursor_offset 'my-codeium/document/cursor_offset)
+  (setq codeium/metadata/api_key (auth-source-pick-first-password :host "codeium.com"))
+  :hook (emacs-startup . (lambda () (run-with-timer 0.1 nil #'codeium-init))))
 
 (provide 'init)
 ;;; init.el ends here
