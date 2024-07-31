@@ -52,6 +52,13 @@
 (require 'use-package-ensure)
 (setq use-package-always-ensure t)
 
+(use-package auth-source
+  :ensure nil
+  :config
+  (when (string-equal system-type "darwin")
+    (setq auth-sources
+      '(macos-keychain-generic macos-keychain-internet "~/.authinfo.gpg" "~/.authinfo" "~/.netrc"))))
+
 ;; Change the user-emacs-directory to keep unwanted things out of ~/.emacs.d
 ;; https://github.com/daviwil/dotfiles/blob/fb83c040258391bbb0cb467278bc709cf995d0ac/.emacs.d/modules/dw-core.el#L25-L27
 (require 'url-history)
