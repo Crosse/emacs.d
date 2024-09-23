@@ -2,6 +2,11 @@
 
 (setq load-prefer-newer t) ; Prefer newest version of a file, whether it be compiled or source.
 
+;; set a higher GC during startup
+(setq gc-cons-threshold (* 100 1024 1024))
+
+(setenv "LSP_USE_PLISTS" "true")
+
 (when (featurep 'native-compile)
   ;; Silence compiler warnings.
   (customize-set-value 'native-comp-async-report-warnings-errors nil)

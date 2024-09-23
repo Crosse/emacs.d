@@ -6,7 +6,6 @@
 
 ;;; Code:
 
-
 ;; taken from daviwil's Emacs config
 (add-hook 'emacs-startup-hook
   (lambda ()
@@ -14,10 +13,9 @@
       (emacs-init-time "%.2f")
       gcs-done)))
 
-;; set a higher GC during startup
-(setq gc-cons-threshold (* 50 1000 1000))
-;; ...but set it much lower afterwards so that GC pauses aren't as significant.
-(add-hook 'after-init-hook (lambda () (setq gc-cons-threshold (* 16 1000 1000))))
+;; GC threshold is set to a larger value in early-init.el,
+;; but we'll set it much lower afterwards so that GC pauses aren't as significant.
+(add-hook 'after-init-hook (lambda () (setq gc-cons-threshold (* 16 1024 1024))))
 
 ;; For packages that aren't in [M]ELPA, copy or git clone them into ~/.emacs.d/site-lisp.
 (let ((default-directory (expand-file-name "~/.emacs.d/site-lisp")))
@@ -26,17 +24,13 @@
   (normal-top-level-add-subdirs-to-load-path)
   (delete-dups load-path))
 
-(load (expand-file-name "~/.emacs.d/init.d/host-config.el"))
-(require 'host-config)
+(eval-and-compile
+  (require 'host-config (expand-file-name "~/.emacs.d/init.d/host-config.el") t))
 
 ;; Add MELPA to the package archives
 (require 'package)
+(setq package-quickstart t)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
-
-(package-initialize)
-(unless package-archive-contents
-  (package-refresh-contents))
 
 ;; Consider built-in packages when installing/upgrading
 ;; This became a thing in Emacs 29.1
@@ -46,7 +40,10 @@
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
-(require 'use-package)
+(eval-when-compile
+  (require 'use-package))
+(setq use-package-verbose t
+  use-package-compute-statistics t)
 
 ;; If a package "used" below doesn't exist, install it.
 (require 'use-package-ensure)
@@ -67,9 +64,11 @@
 
 (use-package recentf
   :ensure nil
-  :init (recentf-mode))
+  :commands recentf-expand-file-name
+  :config (recentf-mode))
 
 (use-package no-littering
+  :after recentf
   :config
   (add-to-list 'recentf-exclude
     (recentf-expand-file-name no-littering-var-directory))
@@ -87,8 +86,11 @@
 (load custom-file t)
 
 ;; Always start the server so that emacsclient can connect.
-;; (do this before setting the custom-file below)
-(when (fboundp 'server-running-p)
+(eval-when-compile (require 'server))
+(use-package server
+  :ensure nil
+  :functions server-running-p
+  :config
   (unless (server-running-p)
     (server-start)))
 
@@ -207,14 +209,13 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; Make Emacs use the $PATH set up by the user's shell
 ;; https://github.com/purcell/exec-path-from-shell
-(eval-and-compile (require 'exec-path-from-shell nil t))
 (use-package exec-path-from-shell
   :if (memq system-type '(usg-unix-v darwin gnu/linux))
   ;; :init
   ;; (setq exec-path-from-shell-arguments '("-l"))
 
   :config
-  (dolist (var '("SSH_AUTH_SOCK" "LANG" "LC_CTYPE"))
+  (dolist (var '("SSH_AUTH_SOCK" "LANG" "LC_CTYPE" "LSP_USE_PLISTS"))
     (add-to-list 'exec-path-from-shell-variables var))
   (exec-path-from-shell-initialize))
 
@@ -226,16 +227,18 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; Project Interaction Library for Emacs
 ;; https://github.com/bbatsov/projectile
-(eval-and-compile (require 'projectile nil t))
+(eval-when-compile (require 'projectile nil t))
 (use-package projectile
   :commands projectile-run-vterm
+  :functions projectile-register-project-type
   :config
   (projectile-mode 1)
   (setq
-    projectile-require-project-root t
+    ;; projectile-require-project-root t
     projectile-dynamic-mode-line nil
-    projectile-indexing-method 'hybrid
-    projectile-sort-order 'recently-active)
+    projectile-indexing-method 'alien
+    ;; projectile-sort-order 'recently-active
+    )
   (setq projectile-globally-ignored-directories
     (append projectile-globally-ignored-directories '("target" "build" ".elixir_ls" "vendor")))
   (setq projectile-project-search-path
@@ -294,7 +297,7 @@ If FRAME is omitted or nil, use currently selected frame."
       (quit-window (or kill "kill") window)))
 
 (defun my/remap-quit-window (keymap)
-  "Remap \"q\" when it is bound to #'quit-window in KEYMAP."
+  "Remap \"q\" when it is bound to #\\='quit-window in KEYMAP."
   (when (fboundp 'evil-collection-define-key)
     (evil-collection-define-key 'normal keymap "q" #'my/quit-window)))
 
@@ -302,7 +305,9 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; https://github.com/emacs-evil/evil-collection
 (use-package evil-collection
   :requires evil
-  :functions evil-collection-set-readonly-bindings
+  :commands
+  evil-collection-set-readonly-bindings
+  evil-collection-define-key
   :config
   (require 'subr-x)
   (advice-add 'evil-collection-set-readonly-bindings :after #'my/remap-quit-window) ; must be before init!
@@ -318,9 +323,10 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; Displays a visual hint on evil edit operations
 ;; https://github.com/edkolev/evil-goggles
-(eval-and-compile (require 'evil-goggles nil t))
+(eval-when-compile (require 'evil-goggles nil t))
 (use-package evil-goggles
   :requires evil
+  :functions evil-goggles-use-diff-faces
   :config
   (evil-goggles-mode)
   (evil-goggles-use-diff-faces))
@@ -330,6 +336,7 @@ If FRAME is omitted or nil, use currently selected frame."
 
 (use-package term
   :ensure nil
+  :commands term-mode
   :config
   (setq explicit-shell-file-name "bash")
   (setq term-prompt-regexp "^[^#$%>\\n]*[#$%>] *"))
@@ -340,6 +347,7 @@ If FRAME is omitted or nil, use currently selected frame."
 (use-package vterm
   :after projectile ; we have :bind and :commands so this is okay
   :bind ("C-`" . projectile-run-vterm)
+  :functions vterm-mode
   :commands vterm
   :config
   ;; (setq term-prompt-regexp "^[^#$%>\\n]*[#$%>] *")
@@ -753,6 +761,7 @@ If FRAME is omitted or nil, use currently selected frame."
   :hook (org-mode . toc-org-mode))
 
 (use-package org-bullets
+  :defer t
   :hook
   (org-mode . (lambda () (org-bullets-mode 1))))
 
@@ -772,9 +781,10 @@ If FRAME is omitted or nil, use currently selected frame."
   (doom-themes-treemacs-config)
   (doom-themes-org-config))
 
+(eval-when-compile (require 'doom-oksolar-light-theme))
 (let
-  ((frame-background-mode 'light)
-    (frame-set-background-mode nil))
+  ((frame-background-mode 'light))
+  (frame-set-background-mode nil)
   (setq doom-oksolar-light-brighter-comments t)
   (load-theme (get-config 'ui-theme) t))
 
@@ -866,11 +876,13 @@ If FRAME is omitted or nil, use currently selected frame."
   "Return t if the current buffer is a real (file-visiting) buffer, or a terminal."
   (or
     (solaire-mode-real-buffer-p)
-    (eq major-mode #'vterm-mode)))
+    (when (fboundp 'vterm-mode)
+      (eq major-mode #'vterm-mode))))
 
 ;; "If only certain buffers could be so grossly incandescent."
 ;; https://github.com/hlissner/emacs-solaire-mode
 (use-package solaire-mode
+  :functions solaire-mode-real-buffer-p
   :config
   (setq solaire-mode-real-buffer-fn #'my/solaire-mode-real-buffer-p)
   :init
@@ -906,7 +918,7 @@ If FRAME is omitted or nil, use currently selected frame."
 ;;; --- Development
 
 ;; Shell scripting
-(eval-and-compile (require 'sh-script nil t))
+(eval-when-compile (require 'sh-script nil t))
 (add-hook 'sh-mode-hook
   (lambda ()
     (setq-local sh-basic-offset 4)))
@@ -932,8 +944,9 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; A replacement for the emacs' built-in command `comment-dwim'.
 ;; https://github.com/remyferre/comment-dwim-2
 (use-package comment-dwim-2
+  :bind ("M-;" . comment-dwim-2)
   :config
-  (global-set-key (kbd "M-;") 'comment-dwim-2)
+  ;; (global-set-key (kbd "M-;") 'comment-dwim-2)
   (setq comment-dwim-2--inline-comment-behavior 'reindent-comment))
 
 ;; `checkdoc` thinks my Emacs init files should conform to the format of a "regular" Emacs lisp
@@ -969,7 +982,9 @@ If FRAME is omitted or nil, use currently selected frame."
 ;;   - shfmt: https://github.com/mvdan/sh
 ;;   - https://github.com/koalaman/shellcheck/
 (use-package flycheck
-  :hook (flycheck-mode . my/disable-checkdoc-in-init-files)
+  :hook
+  (prog-mode . flycheck-mode)
+  (flycheck-mode . my/disable-checkdoc-in-init-files)
   :init (global-flycheck-mode))
 
 ;; Client/library for the Language Server Protocol
@@ -1060,15 +1075,15 @@ If FRAME is omitted or nil, use currently selected frame."
   :after (flycheck rustic-mode) ; we :hook so this is okay
   :hook (flycheck-mode . flycheck-rust-setup))
 
+(use-package flycheck-golangci-lint
+  :config
+  (add-to-list 'flycheck-checkers 'golangci-lint))
+
 ;; Java LSP integration
 ;; https://emacs-lsp.github.io/lsp-java/
 (use-package lsp-java
   :requires lsp-mode
   :hook java . 'lsp)
-
-(use-package flycheck-golangci-lint
-  :config
-  (add-to-list 'flycheck-checkers 'golangci-lint))
 
 (use-package ruby-mode
   :ensure nil
@@ -1119,7 +1134,8 @@ If FRAME is omitted or nil, use currently selected frame."
 (use-package vimrc-mode)
 
 ;; https://melpa.org/#/protobuf-mode
-(use-package protobuf-mode)
+(use-package protobuf-mode
+  :mode ("\\.proto\\'" . protobuf-mode))
 
 ;; Highlight TODO keywords
 ;; https://github.com/tarsius/hl-todo
@@ -1211,6 +1227,8 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; A Common Lisp REPL
 ;; https://github.com/joaotavora/sly
 (use-package sly
+  :mode "\\.lisp\\'"
+  :commands sly
   :config
   (setq sly-lisp-implementations
     `((roswell ("ros" "-Q" "run"))
