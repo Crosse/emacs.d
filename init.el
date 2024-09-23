@@ -214,6 +214,8 @@ If FRAME is omitted or nil, use currently selected frame."
     (add-to-list 'exec-path-from-shell-variables var))
   (exec-path-from-shell-initialize))
 
+(use-package envrc
+  :hook (after-init . envrc-global-mode))
 (use-package treesit
   :ensure nil
   :config
@@ -746,6 +748,7 @@ If FRAME is omitted or nil, use currently selected frame."
       '(line-number-current-line ((t (:inherit (shadow fixed-pitch)))))))
 
 (use-package org
+  :ensure nil ;; use the Org bundled with Emacs
   :custom
   (org-hide-emphasis-markers t)
   :config
@@ -1197,13 +1200,16 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; Mode for handling Dockerfiles
 ;; https://github.com/spotify/dockerfile-mode
-(use-package dockerfile-mode
-  :mode "Dockerfile.*\\'")
+(use-package dockerfile-mode)
+
+;; Emacs major mode of HCL(Hashicorp Configuration Language)
+;; https://github.com/hcl-emacs/hcl-mode
+(use-package hcl-mode)
 
 ;; Major mode of Terraform configuration file
-;; (requires hcl-mode, so we get that one for free)
 ;; https://github.com/emacsorphanage/terraform-mode
 (use-package terraform-mode
+  :requires hcl-mode
   :hook (terraform-mode . terraform-format-on-save-mode))
 
 ;; Mode for editing Markdown-formatted text
