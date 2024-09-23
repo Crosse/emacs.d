@@ -162,7 +162,7 @@
 
 (use-package which-func
   :ensure nil
-  :custom (which-func-non-auto-modes '(treemacs-mode))
+  ;; :custom (which-func-non-auto-modes '(treemacs-mode))
   :config (which-function-mode 1))
 
 (defun my/frame-recenter (&optional frame)
@@ -579,49 +579,57 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; A tree layout file explorer for Emacs
 ;; https://github.com/Alexander-Miller/treemacs/
-(use-package treemacs
-  :defer t
-  :custom
-  (treemacs-project-follow-cleanup t)
-  (treemacs-project-follow-mode t)
-  :config
-  (treemacs-resize-icons 16))
+;; (use-package treemacs
+;;   :defer t
+;;   :commands treemacs
+;;   :custom
+;;   (treemacs-project-follow-cleanup t)
+;;   (treemacs-project-follow-mode t)
+;;   :config
+;;   (treemacs-resize-icons 16))
 
-(use-package treemacs-projectile
-  :after (treemacs projectile))
-(use-package treemacs-perspective
-  :after (treemacs perspective))
-(use-package treemacs-magit
-  :after (treemacs magic))
+;; (use-package treemacs-projectile
+;;   :defer t
+;;   :after (treemacs projectile)
+;;   :commands treemacs-projectile)
+;; (use-package treemacs-perspective
+;;   :defer t
+;;   :after (treemacs perspective))
+;; (use-package treemacs-magit
+;;   :defer t
+;;   :after (treemacs magit))
 
 ;; Evil mode integration for treemacs
 ;; https://github.com/Alexander-Miller/treemacs/blob/master/src/extra/treemacs-evil.el
-(eval-and-compile (require 'treemacs-interface nil t))
-(use-package treemacs-evil
-  :config
-  :bind (:map evil-treemacs-state-map ("TAB" . #'treemacs-TAB-action)))
+;; (eval-when-compile (require 'treemacs-interface nil t))
+;; (use-package treemacs-evil
+;;   :defer t
+;;   :config
+;;   :bind (:map evil-treemacs-state-map ("TAB" . #'treemacs-TAB-action)))
 
 
-(defun my/lsp-treemacs-errors-list-toggle ()
-  "Toggle the LSP errors list in treemacs."
-  (interactive)
-  (let* ((lsp-buffer-name "*LSP Error List*")
-          (lsp-buffer (get-buffer-window lsp-buffer-name)))
-    (if (eq lsp-buffer (selected-window))
-      (kill-buffer lsp-buffer-name)
-      (progn
-        (lsp-treemacs-errors-list)
-        (solaire-mode)))))
+;; (defun my/lsp-treemacs-errors-list-toggle ()
+;;   "Toggle the LSP errors list in treemacs."
+;;   (interactive)
+;;   (let* ((lsp-buffer-name "*LSP Error List*")
+;;           (lsp-buffer (get-buffer-window lsp-buffer-name)))
+;;     (if (eq lsp-buffer (selected-window))
+;;       (kill-buffer lsp-buffer-name)
+;;       (progn
+;;         (lsp-treemacs-errors-list)
+;;         (solaire-mode)))))
 
 ;; Integration for treemode and lsp-mode
 ;; https://github.com/emacs-lsp/lsp-treemacs
-(use-package lsp-treemacs
-  :after (treemacs lsp-mode)            ; we :bind so this is okay
-  :config
-  (lsp-treemacs-sync-mode 1)
-  :bind
-  (:map global-map
-    ("<f11>" . my/lsp-treemacs-errors-list-toggle)))
+;; (use-package lsp-treemacs
+;;   :defer t
+;;   :after (treemacs lsp-mode)            ; we :bind so this is okay
+;;   :commands lsp-treemacs-errors-list
+;;   :config
+;;   (lsp-treemacs-sync-mode 1)
+;;   :bind
+;;   (:map global-map
+;;     ("<f11>" . my/lsp-treemacs-errors-list-toggle)))
 
 
 ;; LaTeX support
@@ -769,7 +777,7 @@ If FRAME is omitted or nil, use currently selected frame."
   :custom
   (doom-themes-enable-bold nil)
   (doom-themes-enable-italic nil)
-  (doom-themes-treemacs-theme "doom-colors")
+  ;; (doom-themes-treemacs-theme "doom-colors")
 
   (doom-gruvbox-dark-variant "hard")
   (doom-gruvbox-padded-modeline nil)
@@ -778,7 +786,7 @@ If FRAME is omitted or nil, use currently selected frame."
 
   :config
   (doom-themes-visual-bell-config)
-  (doom-themes-treemacs-config)
+  ;; (doom-themes-treemacs-config)
   (doom-themes-org-config))
 
 (eval-when-compile (require 'doom-oksolar-light-theme))
