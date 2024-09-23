@@ -189,13 +189,8 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; This hook will not run for the initial frame created when starting Emacs.
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
-;(add-hook 'after-make-frame-functions #'my/gui-setup)
-
-;; ...so to get around that, just unconditionally call the function when this file is read.
-
-(if (display-graphic-p)
-  (my/gui-setup)
-  (tooltip-mode nil))
+(add-hook 'after-make-frame-functions #'my/gui-setup)
+(add-hook 'after-init-hook #'my/gui-setup)
 
 ;; Smooth scrolling...sorta.
 (use-package pixel-scroll
@@ -313,12 +308,13 @@ If FRAME is omitted or nil, use currently selected frame."
   (advice-add 'evil-collection-set-readonly-bindings :after #'my/remap-quit-window) ; must be before init!
   (evil-collection-init))
 
-(with-eval-after-load 'evil-collection
-  (evil-collection-define-key 'normal 'view-mode-map
-    "+" nil
-    "=" nil
-    "0" nil
-    "-" nil))
+(eval-when-compile (require 'evil-collection nil t))
+;; (with-eval-after-load 'evil-collection)
+(evil-collection-define-key 'normal 'view-mode-map
+  "+" nil
+  "=" nil
+  "0" nil
+  "-" nil)
 
 
 ;; Displays a visual hint on evil edit operations
