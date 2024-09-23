@@ -1208,14 +1208,11 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; Mode for the Go programming language
 ;; https://github.com/dominikh/go-mode.el
 (use-package go-mode
-  :mode ("\\.go\\'")
   :config
   (setq gofmt-command "golines")
-  ;; (setq gofmt-args '("--tab-len=8" "--reformat-tags" "--max-len=9999"))
-  (setq gofmt-args '("--tab-len=8" "--max-len=9999"))
+  (setq gofmt-args '("--tab-len=8" "--reformat-tags" "--max-len=9999"))
   :hook
-  ((go-mode . lsp-deferred)
-    (before-save . gofmt-before-save)))
+  (before-save . gofmt-before-save))
 
 ;; Syntax highlighting for .vimrc/_vimrc files
 ;; https://github.com/mcandre/vimrc-mode
