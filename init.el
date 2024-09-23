@@ -1383,8 +1383,21 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; https://github.com/jschaf/powershell.el
 (use-package powershell)
 
+;; Free, ultrafast Copilot alternative for Emacs
+;; https://github.com/Exafunction/codeium.el
+(eval-when-compile (require 'codeium nil t))
 (use-package codeium
-  :ensure nil
+  :ensure nil ;; not in MELPA; clone repo into ~/.emacs.d/site-lisp
+  :commands codeium-init
+  :defines
+  codeium-mode-line-enable
+  codeium-api-enabled
+  codeium/document/text
+  codeium/document/cursor_offset
+  codeium/metadata/api_key
+  :functions
+  codeium-completion-at-point
+  codeium-utf8-byte-length
   :init
   (add-to-list 'completion-at-point-functions #'codeium-completion-at-point)
   :config
