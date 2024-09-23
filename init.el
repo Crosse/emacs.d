@@ -216,11 +216,48 @@ If FRAME is omitted or nil, use currently selected frame."
 
 (use-package envrc
   :hook (after-init . envrc-global-mode))
+
+;; uncomment languages as I test them
+(defconst my/treesit-candidates
+  '(
+     ;; "c"
+     ;; "c-sharp"
+     ;; "cmake"
+     ;; "cpp" ;; actually c++-mode
+     ;; "css"
+     ;; "dockerfile"
+     ;; "elixir"
+     "go"
+     "go-mod"
+     ;; "html"
+     ;; "java"
+     ;; "javascript"
+     ;; "json"
+     ;; "lua"
+     ;; "markdown"
+     ;; "php"
+     "python"
+     ;; "ruby"
+     ;; "rust"
+     ;; "toml"
+     ;; "tsx"
+     ;; "typescript"
+     ;; "yaml"
+     ))
+
 (use-package treesit
   :ensure nil
+  :init
+  (when (file-directory-p "/opt/pkg/lib") ;; for pkgsrc on macOS
+    (setq treesit-extra-load-path '("/opt/pkg/lib"))
+    (add-to-list 'treesit-load-name-override-list '(gomod "libtree-sitter-go-mod" "_tree_sitter_gomod")))
   :config
-  (when (string-equal system-type "darwin")
-    (setq treesit-extra-load-path "/opt/pkg/lib"))) ;; for pkgsrc on macOS
+  (dolist (lang my/treesit-candidates)
+    (let ((legacy-mode (intern (format "%s-mode" lang)))
+           (ts-mode (intern (format "%s-ts-mode" lang))))
+      (when (and (fboundp legacy-mode)
+              (treesit-language-available-p (intern lang)))
+        (cl-pushnew `(,legacy-mode . ,ts-mode) major-mode-remap-alist :test 'equal)))))
 
 ;; Project Interaction Library for Emacs
 ;; https://github.com/bbatsov/projectile
@@ -931,22 +968,16 @@ If FRAME is omitted or nil, use currently selected frame."
     (setq-local sh-basic-offset 4)))
 
 (use-package shfmt
-  :hook (sh-mode . shfmt-on-save-mode)
+  :hook
+  ((sh-mode bash-ts-mode) . shfmt-on-save-mode)
   :custom (shfmt-arguments '("-i" "4")))
 
 (require 'cc-vars)
 (setq c-default-style
   '((java-mode . "java")
+     (java-ts-mode . "java")
      (awk-mode . "awk")
      (other . "bsd")))
-
-(use-package c-mode
-  :ensure nil
-  :hook (c-mode . lsp-deferred))
-
-(use-package c++-mode
-  :ensure nil
-  :hook (c++-mode . lsp-deferred))
 
 ;; A replacement for the emacs' built-in command `comment-dwim'.
 ;; https://github.com/remyferre/comment-dwim-2
@@ -993,6 +1024,30 @@ If FRAME is omitted or nil, use currently selected frame."
   (prog-mode . flycheck-mode)
   (flycheck-mode . my/disable-checkdoc-in-init-files)
   :init (global-flycheck-mode))
+
+(defconst treesit-grammars
+  (cl-loop for lang in my/treesit-candidates
+	   collect (let ((legacy-mode (intern (format "%s-mode" lang)))
+			 (ts-mode (intern (format "%s-ts-mode" lang))))
+		     (when (and (fboundp legacy-mode)
+				(treesit-language-available-p (intern lang)))
+		       ts-mode))))
+
+(defconst lsp-enabled-modes
+  (append treesit-grammars
+    '(
+       c-mode
+       c++-mode
+       rust-mode rustic-mode
+       ruby-mode
+       python-mode
+       groovy-mode
+       go-mode
+       clojure-mode clojurec-mode clojurescript-mode
+       dockerfile-mode
+       terraform-mode
+       rjsx-mode))
+  "Modes for which lsp-mode should be enabled")
 
 ;; Client/library for the Language Server Protocol
 ;; https://emacs-lsp.github.io/lsp-mode/
@@ -1107,13 +1162,13 @@ If FRAME is omitted or nil, use currently selected frame."
   :hook (python-mode . lsp-deferred))
 
 (use-package python-isort
-  :hook (python-mode . python-isort-on-save-mode))
+  :hook ((python-mode python-ts-mode) . python-isort-on-save-mode))
 
 (use-package blacken
-  :hook (python-mode . blacken-mode))
+  :hook ((python-mode python-ts-mode) . blacken-mode))
 
 (use-package poetry
-  :hook (python-mode . poetry-tracking-mode))
+  :hook ((python-mode python-ts-mode) . poetry-tracking-mode))
 
 ;; A groovy major mode, grails minor mode, and a groovy inferior mode.
 ;; https://github.com/Groovy-Emacs-Modes/groovy-emacs-modes
@@ -1122,7 +1177,8 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; Extends the builtin js-mode to add better syntax highlighting for JSON
 ;; https://github.com/joshwnj/json-mode
-(use-package json-mode)
+(unless (treesit-language-available-p 'json)
+  (use-package json-mode))
 
 ;; Mode for the Go programming language
 ;; https://github.com/dominikh/go-mode.el
@@ -1151,14 +1207,15 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; Advanced, type aware, highlight support for CMake
 ;; https://github.com/Lindydancer/cmake-font-lock/
-(use-package cmake-font-lock
-  :hook (cmake-mode .))
+(unless (treesit-language-available-p 'cmake) ;; only load if we don't have cmake-ts-mode
+  (use-package cmake-font-lock
+    :hook (cmake-mode .)))
 
 ;; PlatformIO integration
 ;; https://github.com/ZachMassia/PlatformIO-Mode/
 (use-package platformio-mode
   :requires projectile
-  :hook ((c-mode c++-mode) . platformio-conditionally-enable))
+  :hook ((c-mode c-ts-mode c++-mode c++-ts-mode) . platformio-conditionally-enable))
 
 ;; Arduino project files are just C++, really
 (add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
