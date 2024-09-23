@@ -1052,13 +1052,33 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; Client/library for the Language Server Protocol
 ;; https://emacs-lsp.github.io/lsp-mode/
 ;;
-;; Required things
-;; $ gem install solargraph
-;; $ python3 -m pip install cmake-language-server
-;; $ python3 -m pip install python-language-server 'python-language-server[all]' pyls-mypy future pyls-isort pyls-black
-;; # pkgin in clang-tools-extra
-;;
-;; Clojure: https://github.com/clojure-lsp/clojure-lsp looks promising
+;; List of interesting language servers. The ones with sub-items don't support automatic installation.
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-ansible/
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-awk/
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-bash/
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-csharp-roslyn/ (?)
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-clojure/
+;;   https://github.com/clojure-lsp/clojure-lsp looks promising
+;;   https://github.com/snoe/clojure-lsp is what lsp-mode references
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-cmake/
+;;   https://github.com/regen100/cmake-language-server
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-dockerfile/
+;; https://emacs-lsp.github.io/lsp-mode/manual-language-docs/lsp-gopls/
+;;   go install golang.org/x/tools/gopls@latest
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-html/
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-json/
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-lisp/
+;;   https://github.com/nobody-famous/alive-lsp
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-nginx/
+;;   https://github.com/pappasam/nginx-language-server
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-pwsh/
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-rust-analyzer/
+;;   https://github.com/rust-analyzer/rust-analyzer
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-terraform-ls/
+;;   https://github.com/hashicorp/terraform-ls
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-toml/
+;;   https://github.com/tamasfe/taplo
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-yaml/
 (use-package lsp-mode
   :custom
   (lsp-auto-guess-root t)
@@ -1069,6 +1089,9 @@ If FRAME is omitted or nil, use currently selected frame."
   (lsp-signature-render-documentation nil)
 
   (read-process-output-max (* 2 1024 1024))
+
+  (lsp-go-analyses '((shadow . t) (unusedvariable . t) (useany . t)))
+  (lsp-go-gopls-server-path "gopls")
 
   (lsp-pyls-configuration-sources ["flake8" "pycodestyle"])
 
@@ -1091,6 +1114,9 @@ If FRAME is omitted or nil, use currently selected frame."
 
   :hook
   (lsp-mode . lsp-enable-which-key-integration))
+
+(dolist (mode lsp-enabled-modes)
+  (add-hook (intern (format "%s-hook" mode)) #'lsp-deferred))
 
 ;; UI integrations for lsp-mode
 ;; https://emacs-lsp.github.io/lsp-ui/
@@ -1128,8 +1154,7 @@ If FRAME is omitted or nil, use currently selected frame."
   :requires lsp-mode
   :config
   (setq rustic-format-on-save nil
-    rustic-lsp-server 'rust-analyzer)
-  :hook ((rust-mode rustic-mode) . lsp-deferred))
+    rustic-lsp-server 'rust-analyzer))
 
 ;; Better Rust/Cargo support for Flycheck
 ;; https://github.com/flycheck/flycheck-rust
@@ -1149,17 +1174,18 @@ If FRAME is omitted or nil, use currently selected frame."
 
 (use-package ruby-mode
   :ensure nil
-  :custom (ruby-indent-level 2)
-  :hook (ruby-mode . lsp-deferred))
+  :custom (ruby-indent-level 2))
 
-;; (use-package lsp-pyright
-;;   :hook (python-mode . (lambda ()
-;;                          (require 'lsp-pyright)
-;;                          (lsp))))
-
-(use-package python-mode
+(use-package ruby-ts-mode
   :ensure nil
-  :hook (python-mode . lsp-deferred))
+  :custom (ruby-indent-level 2))
+
+(use-package lsp-pyright
+  :mode
+  ("\\.py\\'" . python-mode)
+  :hook ((python-mode python-ts-mode) . (lambda ()
+                         (require 'lsp-pyright)
+                         (lsp))))
 
 (use-package python-isort
   :hook ((python-mode python-ts-mode) . python-isort-on-save-mode))
@@ -1172,8 +1198,7 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; A groovy major mode, grails minor mode, and a groovy inferior mode.
 ;; https://github.com/Groovy-Emacs-Modes/groovy-emacs-modes
-(use-package groovy-mode
-  :hook (groovy-mode . lsp-deferred))
+(use-package groovy-mode)
 
 ;; Extends the builtin js-mode to add better syntax highlighting for JSON
 ;; https://github.com/joshwnj/json-mode
@@ -1253,7 +1278,7 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; Support for the Clojure(Script) programming language
 ;; https://github.com/clojure-emacs/clojure-mode
 (use-package clojure-mode
-  :hook ((clojure-mode clojurec-mode clojurescript-mode) . lsp-deferred))
+  :defer t)
 
 ;; Mode for handling Dockerfiles
 ;; https://github.com/spotify/dockerfile-mode
@@ -1336,8 +1361,7 @@ If FRAME is omitted or nil, use currently selected frame."
 (use-package rjsx-mode
   :mode ("\\.js[x]?\\'" . rjsx-mode)
   :custom
-  (js2-strict-missing-semi-warning nil)
-  :hook (rjsx-mode . lsp-deferred))
+  (js2-strict-missing-semi-warning nil))
 
 ;; Emacs port of GitGutter which is Sublime Text Plugin
 ;; https://github.com/emacsorphanage/git-gutter
