@@ -25,7 +25,7 @@
       :reader ui-height)
     (ui-theme
       :initarg :ui-theme
-      :initform 'doom-oksolar-light
+      :initform 'doom-gruvbox
       :reader ui-theme)))
 
 (cl-defmethod ui-font ((conf host-config))
@@ -55,7 +55,7 @@
       :initform '("BlexMono Nerd Font Mono" "SauceCodePro Nerd Font Mono" "monospace"))
     (ui-height
       :initarg :ui-height
-      :iniftorm 100
+      :initform 100
       :reader ui-height)))
 
 (defclass host-config-darwin (host-config)

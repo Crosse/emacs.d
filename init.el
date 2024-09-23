@@ -1004,20 +1004,6 @@ If FRAME is omitted or nil, use currently selected frame."
   (lsp-rust-analyzer-import-group t)
   (lsp-rust-server 'rust-analyzer)
 
-  :config
-  (lsp-register-client
-    (make-lsp-client :new-connection (lsp-tramp-connection lsp-go-gopls-server-path)
-      :activation-fn (lsp-activate-on "go" "go.mod")
-      :language-id "go-remote"
-      :priority 0
-      :remote? t
-      :server-id 'gopls
-      :completion-in-comments? t
-      :library-folders-fn #'lsp-go--library-default-directories
-      :after-open-fn (lambda ()
-                       ;; https://github.com/golang/tools/commit/b2d8b0336
-                       (setq-local lsp-completion-filter-on-incomplete nil))))
-
   :bind
   ("<f2>" . lsp-rename)
   ("<f12>" . lsp-ui-peek-find-definitions)
