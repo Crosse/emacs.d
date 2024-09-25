@@ -42,8 +42,7 @@
 
 (eval-when-compile
   (require 'use-package))
-(setq use-package-verbose t
-  use-package-compute-statistics t)
+(setq use-package-compute-statistics nil)
 
 ;; If a package "used" below doesn't exist, install it.
 (require 'use-package-ensure)
@@ -68,6 +67,7 @@
   :config (recentf-mode))
 
 (use-package no-littering
+  :demand t
   :after recentf
   :config
   (add-to-list 'recentf-exclude
@@ -76,6 +76,7 @@
     (recentf-expand-file-name no-littering-etc-directory))
   (setq auto-save-file-name-transforms
     `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
+(eval-when-compile (require 'no-littering))
 
 ;; Keep customization settings in a temporary file
 ;; https://github.com/daviwil/dotfiles/blob/fb83c040258391bbb0cb467278bc709cf995d0ac/.emacs.d/modules/dw-core.el#L33-L38
@@ -205,10 +206,8 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; Make Emacs use the $PATH set up by the user's shell
 ;; https://github.com/purcell/exec-path-from-shell
 (use-package exec-path-from-shell
-  :if (memq system-type '(usg-unix-v darwin gnu/linux))
-  ;; :init
-  ;; (setq exec-path-from-shell-arguments '("-l"))
-
+  :if (memq window-system '(mac ns x))
+  :init (setq exec-path-from-shell-arguments '("-l"))
   :config
   (dolist (var '("SSH_AUTH_SOCK" "LANG" "LC_CTYPE" "LSP_USE_PLISTS"))
     (add-to-list 'exec-path-from-shell-variables var))
@@ -248,10 +247,27 @@ If FRAME is omitted or nil, use currently selected frame."
 (use-package treesit
   :ensure nil
   :init
-  (when (file-directory-p "/opt/pkg/lib") ;; for pkgsrc on macOS
-    (setq treesit-extra-load-path '("/opt/pkg/lib"))
-    (add-to-list 'treesit-load-name-override-list '(gomod "libtree-sitter-go-mod" "_tree_sitter_gomod")))
+  (add-to-list 'treesit-load-name-override-list '(go-mod "libtree-sitter-go-mod" "_tree_sitter_gomod"))
   :config
+  (setq treesit-language-source-alist
+    '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+       (c "https://github.com/tree-sitter/tree-sitter-c")
+       (c-sharp "https://github.com/tree-sitter/tree-sitter-c-sharp")
+       (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+       (css "https://github.com/tree-sitter/tree-sitter-css")
+       (go "https://github.com/tree-sitter/tree-sitter-go")
+       (go-mod "https://github.com/camdencheek/tree-sitter-go-mod")
+       (html "https://github.com/tree-sitter/tree-sitter-html")
+       (java "https://github.com/tree-sitter/tree-sitter-java")
+       (javascript "https://github.com/tree-sitter/tree-sitter-javascript")
+       (jsdoc "https://github.com/tree-sitter/tree-sitter-jsdoc")
+       (json "https://github.com/tree-sitter/tree-sitter-json")
+       (python "https://github.com/tree-sitter/tree-sitter-python")
+       (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
+       (rust "https://github.com/tree-sitter/tree-sitter-rust")
+       (toml "https://github.com/tree-sitter/tree-sitter-toml")
+       (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" nil "typescript/src"))))
+
   (dolist (lang my/treesit-candidates)
     (let ((legacy-mode (intern (format "%s-mode" lang)))
            (ts-mode (intern (format "%s-ts-mode" lang))))
@@ -259,16 +275,23 @@ If FRAME is omitted or nil, use currently selected frame."
               (treesit-language-available-p (intern lang)))
         (cl-pushnew `(,legacy-mode . ,ts-mode) major-mode-remap-alist :test 'equal)))))
 
+(with-eval-after-load 'treesit
+  (defun my/install-all-treesit-grammars ()
+    "Installs all treesitter grammars."
+    (interactive)
+    (mapc #'treesit-install-language-grammar (mapcar #'car treesit-language-source-alist))))
+
 ;; Project Interaction Library for Emacs
 ;; https://github.com/bbatsov/projectile
 (eval-when-compile (require 'projectile nil t))
 (use-package projectile
+  ;; :demand t
   :commands projectile-run-vterm
-  :functions projectile-register-project-type
+  :functions projectile-register-project-type projectile-project-root
   :config
   (projectile-mode 1)
   (setq
-    ;; projectile-require-project-root t
+    projectile-require-project-root t
     projectile-dynamic-mode-line nil
     projectile-indexing-method 'alien
     ;; projectile-sort-order 'recently-active
@@ -278,16 +301,15 @@ If FRAME is omitted or nil, use currently selected frame."
   (setq projectile-project-search-path
     '(("~/code/mine" . 1) ("~/code/mine/lisp . 1") ("~/code/dotfiles" . 0) ("~/code/work" . 1)))
 
-  (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-  (projectile-register-project-type 'platformio '("platformio.ini") :project-file "platformio.ini")
   ;; XXX do I need this if I have the line above?
-  (add-to-list 'projectile-project-root-files-bottom-up "platformio.ini"))
+  (projectile-register-project-type 'platformio '("platformio.ini") :project-file "platformio.ini")
+  (add-to-list 'projectile-project-root-files-bottom-up "platformio.ini")
 
-(with-eval-after-load 'consult
-  (require 'projectile)
-  (when (fboundp 'consult-ripgrep)
-    (define-key projectile-mode-map [remap projectile-ripgrep] 'consult-ripgrep)))
+  (define-key projectile-mode-map [remap projectile-ripgrep] 'consult-ripgrep)
+  :bind (
+          :map projectile-mode-map
+          ("s-p" . projectile-command-map)
+          ("C-c p" . projectile-command-map)))
 
 
 ;; https://github.com/nlamirault/ripgrep.el
@@ -380,7 +402,6 @@ If FRAME is omitted or nil, use currently selected frame."
   :hook (term-mode . eterm-256color-mode))
 
 (use-package vterm
-  :after projectile ; we have :bind and :commands so this is okay
   :bind ("C-`" . projectile-run-vterm)
   :functions vterm-mode
   :commands vterm
@@ -396,15 +417,23 @@ If FRAME is omitted or nil, use currently selected frame."
   (setq vterm-max-scrollback 10000))
 
 
-(defun my/enable-undo-p (&optional filename _noerror)
-  "Return t if FILENAME resides under ~/.emacs.d/elpa."
-  (interactive "GEnter filename: ")
-  (let* ((elpa (expand-file-name "~/.emacs.d/elpa/"))
-          (fname (if filename filename buffer-file-name))
-          (expanded (expand-file-name fname)))
-    (or
-      (string-prefix-p elpa expanded)
-      (not (buffer-name (buffer-base-buffer))))))
+(use-package dash
+  :functions -non-nil)
+
+(defun my/undo-allowed-history (&optional filename _noerror)
+  "Return t if FILENAME if we should save and load undo history."
+  (let* ((ignored-paths `("~/.emacs.d/elpa/"
+                           ,no-littering-etc-directory
+                           ,no-littering-var-directory
+                           "/tmp"
+                           ,(getenv "TMPDIR")))
+          (expanded-paths (seq-map #'expand-file-name (-non-nil ignored-paths))))
+    (and
+      (not buffer-read-only)
+      (stringp filename)
+      (not (string-prefix-p "*" filename))
+      (not (string-prefix-p " *" filename))
+      (not (seq-some (lambda (elt) (string-prefix-p elt (expand-file-name filename))) expanded-paths)))))
 
 ;; undo-tree, required for evil `C-r` redo functionality
 ;; https://www.emacswiki.org/emacs/UndoTree
@@ -417,14 +446,15 @@ If FRAME is omitted or nil, use currently selected frame."
   (setq undo-tree-visualizer-timestamps t)
   (setq undo-tree-visualizer-diff t)
   (advice-add 'undo-tree-make-history-save-file-name :filter-return #'(lambda (FILENAME) (concat FILENAME ".gz")))
-  (advice-add 'undo-tree-load-history :before-until #'my/enable-undo-p)
-  (advice-add 'undo-tree-save-history :before-until #'my/enable-undo-p)
+  (advice-add 'undo-tree-load-history :before-while #'my/undo-allowed-history)
+  (advice-add 'undo-tree-save-history :before-while #'my/undo-allowed-history)
   (global-undo-tree-mode 1))
 
 
 ;; Modular in-buffer completion framework for Emacs
 ;; https://github.com/company-mode/company-mode
 (use-package company
+  :commands company-mode
   :config
   (setq company-global-modes '(not comint-mode
                                 eshell-mode
@@ -447,7 +477,6 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; A company front-end with icons
 ;; https://github.com/sebastiencs/company-box
 (use-package company-box
-  :after company ; We :hook so this is okay
   :hook (company-mode . company-box-mode))
 
 
@@ -532,14 +561,19 @@ If FRAME is omitted or nil, use currently selected frame."
   :init (marginalia-mode))
 
 (use-package xref
-  :ensure nil)
+  :ensure nil
+  :functions
+  xref-show-xrefs-function
+  xref-show-definitions-function
+  )
 
 ;; Consulting completing-read
 ;; https://github.com/minad/consult/
 ;; TODO: check out consult-line{,-multi}, consult-xref, consult-{,rip}grep
 (use-package consult
-  :requires (xref recentf)
   :demand t ; TODO: this might not be necessary since we :hook?
+  :functions consult-customize consult-ripgrep
+  :commands consult-customize
   :bind (:map minibuffer-local-map ("C-r" . consult-history))
   :custom
   (xref-show-xrefs-function #'consult-xref)
@@ -702,20 +736,19 @@ If FRAME is omitted or nil, use currently selected frame."
 
 ;; Perspective
 (use-package perspective
-  :requires (projectile consult)
-  :demand t
   :config
   (setq persp-state-default-file (expand-file-name "perspective.state" user-emacs-directory))
-  (when (fboundp 'consult--customize-put) ; shut up, flycheck (consult-customize, below, is a macro)
-    (consult-customize consult--source-buffer :hidden t :default nil))
+  (consult-customize consult--source-buffer :hidden t :default nil)
   (add-to-list 'consult-buffer-sources persp-consult-source)
   :custom (persp-mode-prefix-key (kbd "C-c C-p"))
-  :hook (kill-emacs . persp-state-save)
-  :init
+  :hook
+  (kill-emacs . persp-state-save)
+  (after-init . persp-mode))
+
+(with-eval-after-load 'perspective
   (persp-mode))
 
 (use-package persp-projectile
-  :requires (perspective projectile)
   :bind (:map projectile-mode-map ("C-c p p" . 'projectile-persp-switch-project)))
 
 ;; Put icons in various places to spruce this place up a bit.
@@ -837,7 +870,6 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; doom-modeline is a modeline taken from the Doom Emacs project.
 ;; https://github.com/seagle0128/doom-modeline
 (use-package doom-modeline
-  :after all-the-icons ; we :hook so this is okay
   :custom
   (doom-modeline-buffer-file-name-style 'relative-from-project)
   (doom-modeline-indent-info t)
@@ -1159,7 +1191,6 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; Better Rust/Cargo support for Flycheck
 ;; https://github.com/flycheck/flycheck-rust
 (use-package flycheck-rust
-  :after (flycheck rustic-mode) ; we :hook so this is okay
   :hook (flycheck-mode . flycheck-rust-setup))
 
 (use-package flycheck-golangci-lint
@@ -1169,7 +1200,7 @@ If FRAME is omitted or nil, use currently selected frame."
 ;; Java LSP integration
 ;; https://emacs-lsp.github.io/lsp-java/
 (use-package lsp-java
-  :requires lsp-mode
+  ;; :requires lsp-mode
   :hook java . 'lsp)
 
 (use-package ruby-mode
@@ -1313,6 +1344,8 @@ If FRAME is omitted or nil, use currently selected frame."
   :custom (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   :bind ("C-c g" . magit-file-dispatch))
 
+(defvar *roswell-init-file* (expand-file-name "~/.roswell/helper.el"))
+
 ;; A Common Lisp REPL
 ;; https://github.com/joaotavora/sly
 (use-package sly
@@ -1323,14 +1356,12 @@ If FRAME is omitted or nil, use currently selected frame."
     `((roswell ("ros" "-Q" "run"))
        (sbcl ("/usr/local/bin/sbcl" "--noinform" "--no-linedit") :coding-system utf-8-unix)
        (ccl ,(expand-file-name "~/bin/ccl"))))
-  (setq sly-default-lisp 'roswell))
-
-(defvar *roswell-init-file* (expand-file-name "~/.roswell/helper.el"))
-(if (file-exists-p *roswell-init-file*)
-  (progn
-    (load *roswell-init-file*)
-    (setq inferior-lisp-program "ros -Q run"))
-  (message "Roswell helper not found; is it installed?"))
+  (setq sly-default-lisp 'roswell)
+  (if (file-exists-p *roswell-init-file*)
+    (progn
+      (load *roswell-init-file*)
+      (setq inferior-lisp-program "ros -Q run"))
+    (message "Roswell helper not found; is it installed?")))
 
 ;; Quicklisp support for SLY
 ;; https://github.com/joaotavora/sly-quicklisp
@@ -1415,5 +1446,6 @@ If FRAME is omitted or nil, use currently selected frame."
   (setq codeium/metadata/api_key (auth-source-pick-first-password :host "codeium.com"))
   :hook (emacs-startup . (lambda () (run-with-timer 0.1 nil #'codeium-init))))
 
+;; (garbage-collect)
 (provide 'init)
 ;;; init.el ends here
