@@ -32,6 +32,10 @@
   "Gets the UI font to use from CONF."
   (cl-remove-if-not #'x-list-fonts (slot-value conf 'ui-font)))
 
+(cl-defmethod ui-theme ((conf host-config))
+  "Gets the UI theme to use from CONF."
+  (slot-value conf 'ui-theme))
+
 (cl-defmethod setup ((conf host-config))
   "Run the setup for CONF."
   (let ((setup (slot-value conf 'setup)))
@@ -82,9 +86,7 @@
   "Set up Linux.")
 
 (defun host-config--setup-darwin ()
-  "Set up Darwin."
-  (with-eval-after-load 'treesit
-    (setq treesit-extra-load-path "/opt/pkg/lib")))
+  "Set up Darwin.")
 
 (defconst host-configs
   `("mouse" ,(make-instance 'host-config-darwin :name "mouse")
